@@ -29,6 +29,7 @@ class User extends Authenticatable
         'role_code',
         'is_online',
         'coverphoto',
+        'role'
     ];
 
     protected $hidden = [

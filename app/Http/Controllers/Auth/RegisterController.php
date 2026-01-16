@@ -19,102 +19,251 @@ use Carbon\Carbon;
 
 class RegisterController extends Controller
 {
+    // public function register(Request $request)
+    // {
+    //     try {
+    //         DB::beginTransaction();
+
+    //         // ✅ Validation rules (no default assignment here)
+    //         $validator = Validator::make($request->all(), [
+    //             'fname' => 'required|string|max:255',
+    //             'lname' => 'required|string|max:255',
+    //             'contactno' => 'nullable|string|max:15',
+    //             'email' => 'required|string|email|max:255|unique:users',
+    //             'password' => 'required|string|confirmed|min:8',
+    //             'company' => 'nullable|string|max:255',
+    //             'industry' => 'nullable|string|max:255',
+    //             'companywebsite' => 'nullable|string|max:255',
+    //             'designation' => 'nullable|string|max:255',
+    //             'age' => 'nullable|integer|min:1|max:150',
+    //             'profession' => 'nullable|string|max:255',
+    //             'statuscode' => 'required|integer|in:0,1',
+    //             'coverphoto' => 'nullable|string|max:255',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => $validator->errors()->all(),
+    //             ]);
+    //         }
+
+    //         // ✅ Generate unique user code
+    //         $lastCode = User::max('code');
+    //         $newCode = empty($lastCode) ? 701 : $lastCode + 1;
+
+    //         // ✅ Create User
+    //         $user = User::create([
+    //             'fname' => $request->fname,
+    //             'lname' => $request->lname,
+    //             'mname' => '',
+    //             'fullname' => ucfirst($request->fname . ' ' . $request->lname),
+    //             'contactno' => $request->contactno,
+    //             'email' => $request->email,
+    //             'password' => Hash::make($request->password),
+    //             'company' => $request->company,
+    //             'code' => $newCode,
+    //             'role_code' => $request->statuscode == 0 ? 'DEF-USERS' : 'DEF-CLIENT',
+    //         ]);
+
+    //         // ✅ Create Resource (add default coverphoto)
+    //         Resource::create([
+    //             'code' => $newCode,
+    //             'fname' => $request->fname,
+    //             'lname' => $request->lname,
+    //             'mname' => '',
+    //             'fullname' => ucfirst($request->fname . ' ' . $request->lname),
+    //             'contact_no' => $request->contactno,
+    //             'age' => $request->age,
+    //             'email' => $request->email,
+    //             'profession' => $request->profession,
+    //             'company' => $request->company,
+    //             'industry' => $request->industry,
+    //             'companywebsite' => $request->companywebsite,
+    //             'role_code' => $request->statuscode == 0 ? 'DEF-USERS' : 'DEF-CLIENT',
+    //             'designation' => $request->designation,
+    //             'coverphoto' => $request->coverphoto ?? 'default.jpg', // ✅ FIXED HERE
+    //         ]);
+
+    //         // ✅ Generate verification code
+    //         $verificationCode = Str::random(7);
+
+    //         DB::insert('INSERT INTO email_codes (email, code) VALUES (?, ?)', [
+    //             $request->email,
+    //             $verificationCode,
+    //         ]);
+
+    //         // ✅ Send activation email
+    //         $data = [
+    //             'fname' => $request->fname,
+    //             'email' => $request->email,
+    //             'code' => $verificationCode,
+    //         ];
+    //         Mail::to($request->email)->send(new Registeractivation($data));
+
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => "You have registered successfully. Please check your email to activate your account.",
+    //         ], 201);
+    //     } catch (\Throwable $th) {
+    //         DB::rollBack();
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => $th->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
+
+    // public function register(Request $request)
+    // {
+    //     try {
+    //         DB::beginTransaction();
+
+    //         // ✅ Validate only required fields
+    //         $validator = Validator::make($request->all(), [
+    //             'firstname' => 'required|string|max:255',
+    //             'lastname'  => 'required|string|max:255',
+    //             'email'     => 'required|email|unique:users,email',
+    //             'password'  => 'required|string|min:8|confirmed',
+    //             'role'      => 'required|in:runner,photographer',
+    //         ]);
+
+    //         if ($validator->fails()) {
+    //             return response()->json([
+    //                 'success' => false,
+    //                 'message' => $validator->errors()->all(),
+    //             ], 422);
+    //         }
+
+    //         // ✅ Generate unique user code
+    //         $newCode = (User::max('code') ?? 700) + 1;
+
+    //         // ✅ Map role → role_code
+    //         $roleCodeMap = [
+    //             'runner'        => 'DEF-USERS',
+    //             'photographer'  => 'DEF-CLIENT',
+    //         ];
+
+    //         $roleCode = $roleCodeMap[$request->role];
+
+    //         // ✅ Create User
+    //         User::create([
+    //             'fname'      => $request->firstname,
+    //             'lname'      => $request->lastname,
+    //             'fullname'   => ucfirst($request->firstname . ' ' . $request->lastname),
+    //             'email'      => $request->email,
+    //             'password'   => Hash::make($request->password),
+    //             'code'       => $newCode,
+    //             'role_code'  => $roleCode,
+    //             'is_online'  => false,
+    //         ]);
+
+    //         // ✅ Create Resource profile (minimal)
+    //         Resource::create([
+    //             'code'      => $newCode,
+    //             'fname'     => $request->firstname,
+    //             'lname'     => $request->lastname,
+    //             'fullname'  => ucfirst($request->firstname . ' ' . $request->lastname),
+    //             'email'     => $request->email,
+    //             'role_code' => $roleCode,
+    //             'coverphoto'=> 'default.jpg',
+    //         ]);
+
+    //         DB::commit();
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Registration successful. You can now log in.',
+    //         ], 201);
+
+    //     } catch (\Throwable $th) {
+    //         DB::rollBack();
+
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Registration failed.',
+    //         ], 500);
+    //     }
+    // }
+
+
     public function register(Request $request)
     {
         try {
             DB::beginTransaction();
 
-            // ✅ Validation rules (no default assignment here)
             $validator = Validator::make($request->all(), [
-                'fname' => 'required|string|max:255',
-                'lname' => 'required|string|max:255',
-                'contactno' => 'nullable|string|max:15',
-                'email' => 'required|string|email|max:255|unique:users',
-                'password' => 'required|string|confirmed|min:8',
-                'company' => 'nullable|string|max:255',
-                'industry' => 'nullable|string|max:255',
-                'companywebsite' => 'nullable|string|max:255',
-                'designation' => 'nullable|string|max:255',
-                'age' => 'nullable|integer|min:1|max:150',
-                'profession' => 'nullable|string|max:255',
-                'statuscode' => 'required|integer|in:0,1',
-                'coverphoto' => 'nullable|string|max:255',
+                'firstname' => 'required|string|max:255',
+                'lastname'  => 'required|string|max:255',
+                'email'     => 'required|email|unique:users,email',
+                'password'  => 'required|string|min:15|confirmed',
+                'role'      => 'required|in:runner,photographer',
             ]);
 
             if ($validator->fails()) {
                 return response()->json([
                     'success' => false,
                     'message' => $validator->errors()->all(),
-                ]);
+                ], 422);
             }
 
-            // ✅ Generate unique user code
-            $lastCode = User::max('code');
-            $newCode = empty($lastCode) ? 701 : $lastCode + 1;
+            // Generate unique code
+            $newCode = (User::max('code') ?? 700) + 1;
 
-            // ✅ Create User
-            $user = User::create([
-                'fname' => $request->fname,
-                'lname' => $request->lname,
-                'mname' => '',
-                'fullname' => ucfirst($request->fname . ' ' . $request->lname),
-                'contactno' => $request->contactno,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
-                'company' => $request->company,
-                'code' => $newCode,
-                'role_code' => $request->statuscode == 0 ? 'DEF-USERS' : 'DEF-CLIENT',
-            ]);
-
-            // ✅ Create Resource (add default coverphoto)
-            Resource::create([
-                'code' => $newCode,
-                'fname' => $request->fname,
-                'lname' => $request->lname,
-                'mname' => '',
-                'fullname' => ucfirst($request->fname . ' ' . $request->lname),
-                'contact_no' => $request->contactno,
-                'age' => $request->age,
-                'email' => $request->email,
-                'profession' => $request->profession,
-                'company' => $request->company,
-                'industry' => $request->industry,
-                'companywebsite' => $request->companywebsite,
-                'role_code' => $request->statuscode == 0 ? 'DEF-USERS' : 'DEF-CLIENT',
-                'designation' => $request->designation,
-                'coverphoto' => $request->coverphoto ?? 'default.jpg', // ✅ FIXED HERE
-            ]);
-
-            // ✅ Generate verification code
-            $verificationCode = Str::random(7);
-
-            DB::insert('INSERT INTO email_codes (email, code) VALUES (?, ?)', [
-                $request->email,
-                $verificationCode,
-            ]);
-
-            // ✅ Send activation email
-            $data = [
-                'fname' => $request->fname,
-                'email' => $request->email,
-                'code' => $verificationCode,
+            // Role → role_code mapping
+            $roleCodeMap = [
+                'runner'       => 'DEF-USERS',
+                'photographer' => 'DEF-PHOTOGRAPHER',
             ];
-            Mail::to($request->email)->send(new Registeractivation($data));
+
+            $role      = $request->role;
+            $roleCode  = $roleCodeMap[$role];
+
+            // Create User
+            User::create([
+                'fname'     => $request->firstname,
+                'lname'     => $request->lastname,
+                'fullname'  => ucfirst($request->firstname . ' ' . $request->lastname),
+                'email'     => $request->email,
+                'password'  => Hash::make($request->password),
+                'code'      => $newCode,
+                'role'      => $role,        // ✅ ROLE SAVED
+                'role_code' => $roleCode,
+                'is_online' => false,
+            ]);
+
+            // Create Resource profile
+            Resource::create([
+                'code'       => $newCode,
+                'fname'      => $request->firstname,
+                'lname'      => $request->lastname,
+                'fullname'   => ucfirst($request->firstname . ' ' . $request->lastname),
+                'email'      => $request->email,
+                'role'       => $role,        // ✅ ROLE SAVED
+                'role_code'  => $roleCode,
+                'coverphoto' => 'default.jpg',
+            ]);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => "You have registered successfully. Please check your email to activate your account.",
+                'message' => 'Registration successful. You can now log in.',
             ], 201);
+
         } catch (\Throwable $th) {
             DB::rollBack();
+
             return response()->json([
                 'success' => false,
-                'message' => $th->getMessage(),
+                'message' => 'Registration failed.',
             ], 500);
         }
     }
+
 
     public function registerxx(Request $request)
     {

@@ -38,7 +38,8 @@
     use App\Events\NotificationCountUpdated;
     use App\Http\Controllers\System\Submenu\Submenus;
     use App\Http\Controllers\System\Users\AppUsersController;
-
+    use App\Http\Controllers\StorageBackblaze\PhotoUploadController;
+    use App\Http\Controllers\Events\EventController;
     /*
     |--------------------------------------------------------------------------
     | API Routes
@@ -82,6 +83,9 @@
     });
 
 
+
+    
+    // PROTECTED ROUTES
     Route::middleware(['auth:sanctum','checkstatus'])->group(function () {
     Route::get('user', function (Request $request) {return $request->user();});
 
@@ -272,6 +276,26 @@
     Route::get('getHired', [JobListController::class, 'getHired']);
 
 
+    //storage
+    Route::post('uploadphoto', [PhotoUploadController::class, 'upload']);
+
+    Route::post('test', function (Request $request) {
+        $file = $request->file('photo');
+        $fileName = $file->getClientOriginalName();
+        $path = Storage::disk('b2')->putFile('photos', $file, 'public');
+        return ['url' => Storage::disk('b2')->url($path)];
+    });
+
+    //backbaze photo routes
+    Route::get('photos/list', [PhotoUploadController::class, 'list']);
+    Route::post('photos/delete', [PhotoUploadController::class, 'delete']);
+
+    //EVENTS
+    Route::post('events/save', [EventController::class, 'save']);
+    Route::delete('events/delete/{id}', [EventController::class, 'delete']);
+    Route::put('events/update/{id}', [EventController::class, 'update']);
+    Route::get('events/getevents', [EventController::class, 'getEvents']);
+    Route::get('events/getEventByUuid/{uuid}', [EventController::class, 'getEventByUuid']);
 
 });
 

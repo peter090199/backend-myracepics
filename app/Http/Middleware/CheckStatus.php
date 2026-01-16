@@ -15,7 +15,12 @@ class CheckStatus
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next): Response
+
+    public function handle(Request $request, Closure $next)
+    {
+        return $next($request);
+    }
+    public function handleXX(Request $request, Closure $next): Response
     {
         if(Auth::user()->status === "I"){
              Auth::logout();

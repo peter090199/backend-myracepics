@@ -44,7 +44,8 @@ class Resource extends Model
         'h1_rolecode',
         'h1_designation',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'role'
     ];
 
 
