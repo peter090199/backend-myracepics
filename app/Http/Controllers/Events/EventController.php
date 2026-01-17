@@ -12,15 +12,15 @@ class EventController extends Controller
     /**
      * Save a new event with single image
      */
+
     public function save(Request $request)
     {
-        // Validate incoming request
         $validated = $request->validate([
             'title'    => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'date'     => 'required|date',
             'category' => 'required|string|max:100',
-            'image'    => 'nullable|string', // base64 image from Angular
+            'image'    => 'nullable|string',
         ]);
 
         $imagePath = null;
@@ -28,21 +28,23 @@ class EventController extends Controller
         if (!empty($validated['image'])) {
             $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
             $imageData = str_replace(' ', '+', $imageData);
+
             $imageName = 'event-' . time() . '.png';
+            $relativePath = 'events/' . $imageName;
 
-            Storage::disk('public')->put('events/' . $imageName, base64_decode($imageData));
+            // Save image
+            Storage::disk('public')->put($relativePath, base64_decode($imageData));
 
-            // Full public URL
-            $imagePath = asset('storage/events/' . $imageName);
+            // 🔥 FORCE URL FORMAT YOU WANT
+            $imagePath = url('storage/app/public/' . $relativePath);
         }
-        // Create event in DB
-        $imagePath = $imagePath ? [$imagePath] : [];
+
         $event = Events::create([
             'title'    => $validated['title'],
             'location' => $validated['location'],
             'date'     => $validated['date'],
             'category' => $validated['category'],
-            'image'    => json_encode($imagePath),
+            'image'    => json_encode($imagePath ? [$imagePath] : []),
         ]);
 
         return response()->json([
@@ -51,6 +53,46 @@ class EventController extends Controller
             'event'   => $event
         ]);
     }
+
+    // public function save(Request $request)
+    // {
+    //     // Validate incoming request
+    //     $validated = $request->validate([
+    //         'title'    => 'required|string|max:255',
+    //         'location' => 'required|string|max:255',
+    //         'date'     => 'required|date',
+    //         'category' => 'required|string|max:100',
+    //         'image'    => 'nullable|string', // base64 image from Angular
+    //     ]);
+
+    //     $imagePath = null;
+
+    //     if (!empty($validated['image'])) {
+    //         $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
+    //         $imageData = str_replace(' ', '+', $imageData);
+    //         $imageName = 'event-' . time() . '.png';
+
+    //         Storage::disk('public')->put('events/' . $imageName, base64_decode($imageData));
+
+    //         // Full public URL
+    //         $imagePath = asset('storage/events/' . $imageName);
+    //     }
+    //     // Create event in DB
+    //     $imagePath = $imagePath ? [$imagePath] : [];
+    //     $event = Events::create([
+    //         'title'    => $validated['title'],
+    //         'location' => $validated['location'],
+    //         'date'     => $validated['date'],
+    //         'category' => $validated['category'],
+    //         'image'    => json_encode($imagePath),
+    //     ]);
+
+    //     return response()->json([
+    //         'success' => true,
+    //         'message' => 'Event saved successfully',
+    //         'event'   => $event
+    //     ]);
+    // }
 
     public function delete($id)
     {
