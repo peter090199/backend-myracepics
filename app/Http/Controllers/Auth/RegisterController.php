@@ -188,9 +188,10 @@ class RegisterController extends Controller
     //         ], 500);
     //     }
     // }
+    // 
+
     public function register(Request $request)
     {
-        //
         try {
             DB::beginTransaction();
 
@@ -218,18 +219,18 @@ class RegisterController extends Controller
                 'photographer' => 'DEF-PHOTOGRAPHER',
             ];
 
-            $role      = $request->role;
-            $roleCode  = $roleCodeMap[$role];
+            $role     = $request->role;
+            $roleCode = $roleCodeMap[$role];
 
             // Create User
-            User::create([
+            $user = User::create([
                 'fname'     => $request->firstname,
                 'lname'     => $request->lastname,
                 'fullname'  => ucfirst($request->firstname . ' ' . $request->lastname),
                 'email'     => $request->email,
                 'password'  => Hash::make($request->password),
                 'code'      => $newCode,
-                'role'      => $role,        // ✅ ROLE SAVED
+                'role'      => $role,
                 'role_code' => $roleCode,
                 'is_online' => false,
             ]);
@@ -241,7 +242,7 @@ class RegisterController extends Controller
                 'lname'      => $request->lastname,
                 'fullname'   => ucfirst($request->firstname . ' ' . $request->lastname),
                 'email'      => $request->email,
-                'role'       => $role,        // ✅ ROLE SAVED
+                'role'       => $role,
                 'role_code'  => $roleCode,
                 'coverphoto' => 'default.jpg',
             ]);
@@ -251,18 +252,26 @@ class RegisterController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Registration successful. You can now log in.',
+                'user'    => $user, // optional: return created user info
             ], 201);
 
         } catch (\Throwable $th) {
             DB::rollBack();
 
+            // Log the error for debugging
+            \Log::error('Registration error: ' . $th->getMessage());
+
+            // Return detailed error only in dev environment
+            $message = app()->environment('production') 
+                ? 'Registration failed.'
+                : $th->getMessage();
+
             return response()->json([
                 'success' => false,
-                'message' => 'Registration failed.',
+                'message' => $message,
             ], 500);
         }
     }
-
 
     public function registerxx(Request $request)
     {
