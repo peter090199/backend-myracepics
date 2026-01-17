@@ -24,7 +24,7 @@ class EventController extends Controller
         // 🔥 Get authenticated user
         $user = Auth::user();
 
-        $role = $user->role;           // ex: Photographer
+        $code = $user->code;           // ex: Photographer
         $roleCode = $user->role_code;  // ex: PH
 
         $imagePath = null;
@@ -36,10 +36,9 @@ class EventController extends Controller
 
             // Folder by role_code
             $fileName = 'event-' . time() . '.png';
-            $relativePath = $roleCode . '/' . $role . '/' . $fileName;
+            $relativePath = $roleCode . '/' . $code . '/' . $fileName;
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
             $imagePath = asset('storage/app/public/' . $relativePath);
-          //  $imagePath = url('storage/app/public/' . $relativePath);
         }
 
         $event = Events::create([
@@ -47,7 +46,7 @@ class EventController extends Controller
             'location'  => $validated['location'],
             'date'      => $validated['date'],
             'category'  => $validated['category'],
-            'role'      => $role,
+            'code'      => $code,
             'role_code' => $roleCode,
             'image'     => json_encode($imagePath ? [$imagePath] : []),
             'user_id'   => $user->id, // recommended
