@@ -189,6 +189,8 @@ class RegisterController extends Controller
     //     }
     // }
     // 
+
+    
     public function register(Request $request)
     {
         try {
