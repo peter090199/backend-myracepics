@@ -15,7 +15,7 @@ return [
     |
     */
 
-    'paths' => ['api/*','broadcasting/*', 'sanctum/csrf-cookie','auth/google/callback','storage/*', 'images/*', '*'],
+    'paths' => ['api/*','broadcasting/*', 'sanctum/csrf-cookie','storage/*', 'images/*', '*'],
 
     'allowed_methods' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
 
