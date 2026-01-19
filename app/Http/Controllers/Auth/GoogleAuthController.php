@@ -120,33 +120,78 @@ class GoogleAuthController extends Controller
     }
 
     // Step 2: Handle callback
-    public function handleGoogleCallback()
+       public function handleGoogleCallback(Request $request)
     {
         try {
+            // Get user info from Google
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            // Find or create user
-            $user = User::firstOrCreate(
-                ['email' => $googleUser->getEmail()],
-                [
-                    'name' => $googleUser->getName(),
-                    'google_id' => $googleUser->getId(),
-                    'email_verified_at' => now(),
-                ]
-            );
+            // Find existing user
+            $user = User::where('email', $googleUser->getEmail())->first();
 
-            // Create token (for API auth)
-            $token = $user->createToken('auth_token')->plainTextToken;
+            if (!$user) {
+                // Create user if not exists
+                $user = User::create([
+                    'name'      => $googleUser->getName(),
+                    'email'     => $googleUser->getEmail(),
+                    'password'  => bcrypt(str()->random(16)),
+                    'role_code' => 'DEF-USERS',
+                    'is_online' => true,
+                    'code'      => str()->random(8),
+                ]);
+
+                Userprofile::create([
+                    'code' => $user->code,
+                    // default profile fields
+                ]);
+            }
+
+            // Delete old tokens
+            $user->tokens()->delete();
+
+            // Update online status
+            $user->is_online = true;
+            $user->save();
+
+            // Create new token
+            $token = $user->createToken('Personal Access Token')->plainTextToken;
+
+            // Role mapping
+            $roleMap = [
+                'DEF-USERS'        => 'runner',
+                'DEF-ADMIN'        => 'admin',
+                'DEF-MASTERADMIN'  => 'masteradmin',
+                'DEF-PHOTOGRAPHER' => 'photographer',
+            ];
+
+            $roleName = $roleMap[$user->role_code] ?? 'unknown';
+
+            // Profile existence
+            $userProfileExists = Userprofile::where('code', $user->code)->exists();
+
+            // Message flag logic
+            $messageFlag = (
+                $user->role_code === 'DEF-PHOTOGRAPHER' ||
+                in_array($user->role_code, ['DEF-ADMIN', 'DEF-MASTERADMIN']) ||
+                ($user->role_code === 'DEF-USERS' && $userProfileExists)
+            ) ? 0 : 1;
 
             return response()->json([
-                'access_token' => $token,
-                'token_type' => 'Bearer',
-                'user' => $user
+                'success'   => true,
+                'token'     => $token,
+                'role'      => $roleName,
+                'role_code' => $user->role_code,
+                'message'   => $messageFlag,
+                'is_online' => true
             ]);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Authentication failed', 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Google login failed: ' . $e->getMessage()
+            ]);
         }
     }
 
 
+    
 }
