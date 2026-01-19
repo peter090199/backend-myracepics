@@ -1,15 +1,52 @@
 <?php
 
 namespace App\Http\Controllers\Auth;
-
+use Google\Auth\AccessToken;
+use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Auth;
+// use App\Http\Controllers\Controller;
+// use Laravel\Socialite\Facades\Socialite;
+// use App\Models\User;
+// use Illuminate\Support\Str;
+// use Illuminate\Support\Facades\Auth;
 
 class GoogleAuthController extends Controller
 {
+      public function googleLogin(Request $request)
+    {
+        $request->validate([
+            'credential' => 'required|string'
+        ]);
+
+        $token = $request->credential;
+
+        $auth = new AccessToken();
+        $payload = $auth->verify($token);
+
+        if (!$payload) {
+            return response()->json(['message' => 'Invalid Google token'], 401);
+        }
+
+        $user = User::updateOrCreate(
+            ['email' => $payload['email']],
+            [
+                'name'       => $payload['name'],
+                'google_id'  => $payload['sub'],
+                'avatar'     => $payload['picture'] ?? null,
+                'password'   => bcrypt(Str::random(16)),
+            ]
+        );
+
+        $apiToken = $user->createToken('google-login')->plainTextToken;
+
+        return response()->json([
+            'token' => $apiToken,
+            'user'  => $user
+        ]);
+    }
+    
     public function redirect()
     {
         return Socialite::driver('google')

@@ -43,7 +43,7 @@
     use App\Http\Controllers\Auth\GoogleAuthController;
 
 
-    
+
     /*
     |--------------------------------------------------------------------------
     | API Routes
@@ -296,6 +296,7 @@
 
     Route::get('auth/google', [GoogleAuthController::class, 'redirect']);
     Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
+    Route::post('auth/google', [GoogleAuthController::class, 'googleLogin']);
 
     //EVENTS
     Route::post('events/save', [EventController::class, 'save']);
