@@ -56,6 +56,11 @@
     */  
 
     // PUBLIC
+    Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
+    Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
+
+
+
     Route::post('login',[LoginController::class,'login'])->name('login');
 
     Route::post('resetpassword',[ForgetpasswordController::class,'resetpassword'])->name('resetpassword');
@@ -297,9 +302,6 @@
     Route::get('auth/google', [GoogleAuthController::class, 'redirect']);
     Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
     Route::post('googleLogin', [GoogleAuthController::class, 'googleLogin']);
-
-    Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirectToGoogle']);
-    Route::get('auth/google/callback', [GoogleAuthController::class, 'handleGoogleCallback']);
 
 
     //EVENTS
