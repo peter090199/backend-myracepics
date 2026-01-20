@@ -113,23 +113,32 @@ class GoogleAuthController extends Controller
             ], 500);
         }
     }
+
+    
     public function setGoogleRole(Request $request)
     {
-        // Validate request
+        // Validate
         $request->validate([
-            'user_id' => 'required|exists:users,id', // column is 'id'
-            'role'    => 'required|in:runner,photographer',
+            'role'  => 'required|in:runner,photographer',
         ]);
 
         try {
-            // Find user by ID
-            $user = User::findOrFail($request->user_id);
+            // Get user from token instead of user_id
+            $token = $request->bearerToken() ?? $request->query('token');
+            if (!$token) {
+                return response()->json(['success' => false, 'message' => 'Missing token.'], 401);
+            }
 
-            // Check if user already has a role
+            $user = auth()->guard('sanctum')->user();
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Invalid token.'], 401);
+            }
+
+            // If role exists, cannot update
             if ($user->role) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Role already exists. Cannot update.',
+                    'message' => 'Role already exists.',
                     'current_role' => $user->role,
                 ], 400);
             }
@@ -139,15 +148,13 @@ class GoogleAuthController extends Controller
                 'photographer' => 'DEF-PHOTOGRAPHER',
             ];
 
-            // Use transaction to update User and Resource atomically
+            // Transaction to update user & resource
             DB::transaction(function () use ($user, $request, $roleCodeMap) {
-                // Update user role
                 $user->update([
                     'role'      => $request->role,
                     'role_code' => $roleCodeMap[$request->role],
                 ]);
 
-                // Update Resource profile
                 $resource = Resource::where('code', $user->code)->first();
                 if ($resource) {
                     $resource->update([
@@ -157,18 +164,21 @@ class GoogleAuthController extends Controller
                 }
             });
 
+            // Redirect Angular after role selection
+            $frontend = config('app.frontend.url', 'http://localhost:4200');
+            $redirectUrl = match ($request->role) {
+                'runner' => "{$frontend}/runner/allevents?token={$token}",
+                'photographer' => "{$frontend}/photographer/allevents?token={$token}",
+            };
+
             return response()->json([
                 'success' => true,
                 'message' => 'Role assigned successfully.',
-                'role'    => $request->role,
+                'redirect_url' => $redirectUrl,
             ]);
 
         } catch (\Throwable $e) {
-            \Log::error('Set Google role error: '.$e->getMessage(), [
-                'user_id' => $request->user_id,
-                'role'    => $request->role,
-            ]);
-
+            Log::error('Set Google role error: '.$e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to set role.',
