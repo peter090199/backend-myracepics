@@ -99,9 +99,9 @@ class GoogleAuthController extends Controller
 
             // Role exists → redirect to correct Angular route
             if ($user->role === 'runner') {
-                return redirect()->to("{$frontend}/runner/allevents?user_id={$user->id}&token={$token}");
+                return redirect()->to("{$frontend}/runner/allevents");
             } elseif ($user->role === 'photographer') {
-                return redirect()->to("{$frontend}/photographer/allevents?user_id={$user->id}&token={$token}");
+                return redirect()->to("{$frontend}/photographer/allevents");
             }
 
             // Fallback (in case role is something unexpected)
