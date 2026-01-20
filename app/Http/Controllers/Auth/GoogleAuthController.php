@@ -87,7 +87,8 @@ class GoogleAuthController extends Controller
 
             // Create API token
             $token = $user->createToken('google-token')->plainTextToken;
-            $frontend = config('app.frontend.url');
+            $frontend = rtrim(config('app.frontend_url'), '/');
+
 
             // Redirect Angular
             if (!$user->role) {
