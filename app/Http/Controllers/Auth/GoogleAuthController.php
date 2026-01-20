@@ -33,10 +33,10 @@ class GoogleAuthController extends Controller
             if (!$user) {
                 // If not, create new user
                 $user = User::create([
-                    'name' => $googleUser->getName(),
+                    'fname' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
                     'password' => bcrypt(Str::random(16)), // random password
-                    'google_id' => $googleUser->getId(),
+                    'code' => $googleUser->getId(),
                 ]);
             }
 
@@ -66,7 +66,7 @@ class GoogleAuthController extends Controller
 
             if (!$user) {
                 $user = User::create([
-                    'name'      => $googleUser->getName(),
+                    'fname'      => $googleUser->getName(),
                     'email'     => $googleUser->getEmail(),
                     'password'  => bcrypt(Str::random(16)),
                     'role_code' => 'DEF-RUNNER',
