@@ -93,12 +93,12 @@ class GoogleAuthController extends Controller
             // Redirect Angular
             if (!$user->role) {
                 return redirect()->to(
-                    "{$frontend}/auth/google/select-role?user_id={$user->id}&token={$token}"
+                    "{$frontend}/auth/google/select-role?user_id={$user->id}"
                 );
             }
 
             return redirect()->to(
-                "{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}"
+                "{$frontend}/auth/google/callback?user_id={$user->id}"
             );
 
         } catch (\Throwable $e) {
