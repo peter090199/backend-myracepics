@@ -8,28 +8,25 @@ use App\Models\Resource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
-use Laravel\Sanctum\PersonalAccessToken;
+use Illuminate\Support\Facades\Log;
 
 class GoogleAuthController extends Controller
 {
-    /**
-     * Step 1: Redirect user to Google OAuth
-     */
+    // Step 1: Redirect to Google
     public function redirectToGoogle()
     {
         return Socialite::driver('google')
-            ->stateless() // For API / Angular flow
+            ->stateless() // Use stateless for API / Angular
             ->redirect();
     }
 
-    /**
-     * Step 2: Handle Google callback
-     */
+    // Step 2: Handle callback
     public function handleGoogleCallback(Request $request)
     {
         try {
+            // Check if Google sent 'code'
             if (!$request->has('code')) {
                 throw new \Exception('Missing authorization code from Google');
             }
@@ -39,7 +36,7 @@ class GoogleAuthController extends Controller
             // Get Google user
             $googleUser = Socialite::driver('google')->stateless()->user();
 
-            // Check if user exists
+            // Check existing user
             $user = User::where('google_id', $googleUser->getId())
                 ->orWhere('email', $googleUser->getEmail())
                 ->first();
@@ -82,96 +79,66 @@ class GoogleAuthController extends Controller
                     'coverphoto' => 'default.jpg',
                 ]);
             } else {
+                // Existing user → mark online
                 $user->update(['is_online' => true]);
             }
 
             DB::commit();
 
-            // Generate API token
-            $token = $user->createToken('google-token')->plainTextToken;
-            $frontend = config('app.frontend.url', 'http://localhost:4200');
+            // Create API token
+          //  $token = $user->createToken('google-token')->plainTextToken;
+            $frontend = config('app.frontend.url', 'https://myracepics.com');
 
-            // Role-based redirect
+            // Redirect Angular
             if (!$user->role) {
-                // No role → Angular role selection
-                return redirect()->to("{$frontend}/auth/google/select-role?token={$token}");
+                return redirect()->to(
+                    "{$frontend}/auth/google/select-role?user_id={$user->id}&token={$token}"
+                );
             }
 
-            // Role exists → role-specific Angular route
-            $redirectUrl = match ($user->role) {
-                'runner' => "{$frontend}/runner/allevents?token={$token}",
-                'photographer' => "{$frontend}/photographer/allevents?token={$token}",
-                default => "{$frontend}/auth/google/select-role?token={$token}"
-            };
-
-            return redirect()->to($redirectUrl);
+            return redirect()->to(
+                "{$frontend}/auth/google/callback?user_id={$user->id}&token={$token}"
+            );
 
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error('Google OAuth Callback Error', [
+            Log::error('Google Save Error', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
             ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Google authentication failed. Please try again.'
+                'message' => $e->getMessage()
             ], 500);
         }
     }
 
-    /**
-     * Step 3: Set Google user role (from Angular)
-     */
+    
     public function setGoogleRole(Request $request)
     {
-        // Validate role
         $request->validate([
-            'role' => 'required|in:runner,photographer',
+            'user_id' => 'required|exists:users,id',
+            'role'    => 'required|in:runner,photographer',
         ]);
 
         try {
-            // Get token from query param
-            $tokenValue = $request->query('token');
-            if (!$tokenValue) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Missing token.'
-                ], 401);
-            }
-
-            // Get user from token
-            $accessToken = PersonalAccessToken::findToken($tokenValue);
-            if (!$accessToken) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid token.'
-                ], 401);
-            }
-
-            $user = $accessToken->tokenable;
-
-            // Prevent role overwrite
-            if ($user->role) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Role already exists.',
-                    'current_role' => $user->role
-                ], 400);
-            }
+            $user = User::findOrFail($request->user_id);
 
             $roleCodeMap = [
                 'runner'       => 'DEF-USERS',
                 'photographer' => 'DEF-PHOTOGRAPHER',
             ];
 
-            // Atomic update
+            $token = $user->createToken('google-token')->plainTextToken;
             DB::transaction(function () use ($user, $request, $roleCodeMap) {
+                // Update user role
                 $user->update([
                     'role'      => $request->role,
                     'role_code' => $roleCodeMap[$request->role],
                 ]);
 
+                // Update Resource profile
                 $resource = Resource::where('code', $user->code)->first();
                 if ($resource) {
                     $resource->update([
@@ -181,29 +148,23 @@ class GoogleAuthController extends Controller
                 }
             });
 
-            // Return redirect URL for Angular
-            $frontend = config('app.frontend.url', 'http://localhost:4200');
-            $redirectUrl = match ($request->role) {
-                'runner' => "{$frontend}/runner/allevents?token={$tokenValue}",
-                'photographer' => "{$frontend}/photographer/allevents?token={$tokenValue}",
-            };
-
+            // Create API token for Angular
             return response()->json([
                 'success' => true,
-                'message' => 'Role assigned successfully.',
-                'redirect_url' => $redirectUrl
+                'message' => 'Role updated successfully.',
+                'token'   => $token,
+                'user'    => $user,
             ]);
 
         } catch (\Throwable $e) {
-            Log::error('Set Google role error: '.$e->getMessage(), [
-                'token' => $request->query('token'),
-                'role'  => $request->role,
-            ]);
+            \Log::error('Set Google role error: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to set role.'
+                'message' => 'Failed to set role. '.$e->getMessage(),
             ], 500);
         }
     }
+
+    
 }
