@@ -115,14 +115,15 @@ class GoogleAuthController extends Controller
     }
     public function setGoogleRole(Request $request)
     {
+        // Validate request
         $request->validate([
-            'google_id' => 'required|exists:users,google_id', // validate google_id exists
-            'role'      => 'required|in:runner,photographer',
+            'user_id' => 'required|exists:users,id', // column is 'id'
+            'role'    => 'required|in:runner,photographer',
         ]);
 
         try {
-            // Find user by Google ID
-            $user = User::where('google_id', $request->google_id)->firstOrFail();
+            // Find user by ID
+            $user = User::findOrFail($request->user_id);
 
             // Check if user already has a role
             if ($user->role) {
@@ -138,8 +139,9 @@ class GoogleAuthController extends Controller
                 'photographer' => 'DEF-PHOTOGRAPHER',
             ];
 
+            // Use transaction to update User and Resource atomically
             DB::transaction(function () use ($user, $request, $roleCodeMap) {
-                // Set user role
+                // Update user role
                 $user->update([
                     'role'      => $request->role,
                     'role_code' => $roleCodeMap[$request->role],
@@ -163,8 +165,8 @@ class GoogleAuthController extends Controller
 
         } catch (\Throwable $e) {
             \Log::error('Set Google role error: '.$e->getMessage(), [
-                'google_id' => $request->google_id,
-                'role'      => $request->role,
+                'user_id' => $request->user_id,
+                'role'    => $request->role,
             ]);
 
             return response()->json([
@@ -173,7 +175,6 @@ class GoogleAuthController extends Controller
             ], 500);
         }
     }
-
 
     // public function setGoogleRole(Request $request)
     // {
