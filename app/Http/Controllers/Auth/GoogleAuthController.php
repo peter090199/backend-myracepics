@@ -26,6 +26,81 @@ class GoogleAuthController extends Controller
     public function handleGoogleCallback(Request $request)
     {
         try {
+            // Get Google user (stateless)
+            $googleUser = Socialite::driver('google')->stateless()->user();
+
+            // Find or create user
+            $user = User::where('google_id', $googleUser->id)
+                        ->orWhere('email', $googleUser->email)
+                        ->first();
+
+            if (!$user) {
+                DB::beginTransaction();
+
+                // Generate unique code
+                do {
+                    $newCode = (max(User::max('code') ?? 700, Resource::max('code') ?? 700)) + 1;
+                } while (User::where('code', $newCode)->exists() || Resource::where('code', $newCode)->exists());
+
+                // Create user without role yet
+                $user = User::create([
+                    'fname'       => $googleUser->name,
+                    'lname'       => null,
+                    'fullname'    => $googleUser->name,
+                    'email'       => $googleUser->email,
+                    'google_id'   => $googleUser->id,
+                    'google_token'=> $googleUser->token,
+                    'google_refresh_token' => $googleUser->refreshToken,
+                    'password'    => Hash::make(Str::random(16)),
+                    'code'        => $newCode,
+                    'is_online'   => true, // mark as online
+                    'role'        => null,
+                    'role_code'   => null,
+                ]);
+
+                // Create resource profile without role
+                Resource::create([
+                    'code'       => $newCode,
+                    'fname'      => $googleUser->name,
+                    'lname'      => null,
+                    'fullname'   => $googleUser->name,
+                    'email'      => $googleUser->email,
+                    'role'       => null,
+                    'role_code'  => null,
+                    'coverphoto' => 'default.jpg',
+                ]);
+
+                DB::commit();
+            } else {
+                // Existing user: mark online
+                $user->update(['is_online' => true]);
+            }
+
+            // Check if role is set
+            if (!$user->role) {
+                // Redirect to Angular page to select role
+                $angularUrl = config('app.frontend.url') ?? 'http://localhost:4200';
+                return redirect()->to($angularUrl . "/auth/google/select-role?user_id={$user->id}");
+            }
+
+            // Role is already set → create token and return
+            $token = $user->createToken('google-token')->plainTextToken;
+            $angularUrl = config('app.frontend.url') ?? 'http://localhost:4200';
+            return redirect()->to($angularUrl . "/auth/google/callback?token={$token}&user_id={$user->id}");
+
+        } catch (\Throwable $e) {
+            Log::error('Google Callback Error', [
+                'message' => $e->getMessage(),
+                'trace'   => $e->getTraceAsString(),
+            ]);
+
+            return view('auth.google-error', ['error' => $e->getMessage()]);
+        }
+    }
+
+    public function handleGoogleCallbackx2(Request $request)
+    {
+        try {
             // 🔑 Get Google user (stateless for API / Angular)
             $googleUser = Socialite::driver('google')->stateless()->user();
 
