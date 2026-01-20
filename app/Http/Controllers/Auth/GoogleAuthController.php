@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use DB;
 use App\Models\Resource;
-
+use Illuminate\Support\Facades\Hash;
 
 class GoogleAuthController extends Controller
 {
