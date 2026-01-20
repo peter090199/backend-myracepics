@@ -29,7 +29,10 @@ class User extends Authenticatable
         'role_code',
         'is_online',
         'coverphoto',
-        'role'
+        'role',
+        'google_id',
+        'google_token',
+        'google_refresh_token'
     ];
 
     protected $hidden = [

@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 use App\Models\Userprofile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class GoogleAuthController extends Controller
 {
@@ -21,13 +22,86 @@ class GoogleAuthController extends Controller
         return Socialite::driver('google')->stateless()->redirect();
     }
 
-    // Step 2: Handle callback
     public function handleGoogleCallback(Request $request)
     {
-         $googleUser = Socialite::driver('google')->user();
-         $dd($googleUser);
+        try {
+            // 🔑 Get Google user (stateless for API / Angular)
+            $googleUser = Socialite::driver('google')
+                ->stateless()
+                ->user();
+
+            // Optional: debug user data (remove in production)
+            // dd($googleUser);
+
+            // ✅ Save or update user in DB
+            $user = User::updateOrCreate(
+                ['google_id' => $googleUser->id], // match by Google ID
+                [
+                    'fname' => $googleUser->name, // change to your DB column
+                    'lname' => null, // nullable if your DB requires it
+                    'email' => $googleUser->email,
+                    'google_token' => $googleUser->token,
+                    'google_refresh_token' => $googleUser->refreshToken,
+                ]
+            );
+
+            // ✅ Create API token
+            $token = $user->createToken('google-token')->plainTextToken;
+
+            // ✅ Return Blade view with user info
+             $angularUrl = config('app.frontend.url') ?? 'http://localhost:4200'; 
+            return redirect()->to($angularUrl . "/auth/google/callback?token={$token}&user_id={$user->id}");
+            
+          //  return view('auth.google-success', compact('user', 'token'));
+
+        } catch (\Exception $e) {
+
+            // 🧠 Log error
+            Log::error('Google Callback Error', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            // ✅ Return error view
+            return view('auth.google-error', [
+                'error' => $e->getMessage()
+            ]);
+        }
     }
-    
+
+    // Step 2: Handle callback
+    public function handleGoogleCallbackxx22(Request $request)
+    {
+        try {
+            // Get Google user
+            $googleUser = Socialite::driver('google')->user();
+
+            // OPTIONAL: debug (use only one)
+             dd($googleUser);
+
+            // Find or create user
+           // $user = User::where('email', $googleUser->getEmail())->first();
+
+            // if (!$user) {
+            //     $user = User::create([
+            //         'fname' => $googleUser->getName(),
+            //         'email' => $googleUser->getEmail(),
+            //         'password' => bcrypt(Str::random(16)),
+            //         'code' => $googleUser->getId(),
+            //     ]);
+            // }
+
+            // ✅ CALL THE VIEW
+           // return view('auth.google-success', compact('user'));
+
+        } catch (\Exception $e) {
+            return view('auth.google-error', [
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+
     public function handleGoogleCallback22(Request $request)
     {
         try {

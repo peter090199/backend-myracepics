@@ -5,7 +5,7 @@ use  App\Http\Controllers\Auth\ProfileController;
 use  App\Http\Controllers\Auth\PostController;
 use  App\Http\Controllers\MessageController;
 use  App\Events\MessageSent;
-
+use  App\Http\Controllers\Auth\GoogleAuthController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -16,6 +16,13 @@ use  App\Events\MessageSent;
 | be assigned to the "web" middleware group. Make something great!
 |
 */
+Route::get('/login', function () {
+    return view('auth.signin');
+});
+
+Route::get("auth/google",[GoogleAuthController::class,"redirectToGoogle"])->name("redirect.google");
+Route::get("auth/google/callback",[GoogleAuthController::class,"handleGoogleCallback"]);
+
 
 
 Route::get('/', function () {
