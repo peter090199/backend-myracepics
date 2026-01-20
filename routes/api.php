@@ -299,11 +299,6 @@
     Route::get('photos/list', [PhotoUploadController::class, 'list']);
     Route::post('photos/delete', [PhotoUploadController::class, 'delete']);
 
-    Route::get('auth/google', [GoogleAuthController::class, 'redirect']);
-    Route::get('auth/google/callback', [GoogleAuthController::class, 'callback']);
-    Route::post('googleLogin', [GoogleAuthController::class, 'googleLogin']);
-
-
     //EVENTS
     Route::post('events/save', [EventController::class, 'save']);
     Route::delete('events/delete/{id}', [EventController::class, 'delete']);
