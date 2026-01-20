@@ -39,10 +39,8 @@ class GoogleAuthController extends Controller
                     'code' => $googleUser->getId(), // store Google ID
                 ]
             );
-
             // Generate API token for Angular
             $token = $user->createToken('API Token')->plainTextToken;
-
             return response()->json([
                 'user' => $user,
                 'token' => $token,
