@@ -133,11 +133,12 @@ class GoogleAuthController extends Controller
             }
             DB::beginTransaction();
             $googleUser = Socialite::driver('google')->stateless()->user();
+
             // Check existing user
             $user = User::where('google_id', $googleUser->getId())
                 ->orWhere('email', $googleUser->getEmail())
                 ->first();
-
+            
             if (!$user) {
                 do {
                     $newCode = max(
