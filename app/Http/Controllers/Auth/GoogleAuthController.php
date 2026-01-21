@@ -15,12 +15,23 @@ use Illuminate\Support\Facades\Log;
 class GoogleAuthController extends Controller
 {
     // Step 1: Redirect to Google
+    // public function redirectToGoogle()
+    // {
+    //     return Socialite::driver('google')
+    //         ->stateless() // Use stateless for API / Angular
+    //         ->redirect();
+    // }
+
     public function redirectToGoogle()
     {
         return Socialite::driver('google')
-            ->stateless() // Use stateless for API / Angular
+            ->stateless()
+            ->with([
+                'prompt' => 'select_account'
+            ])
             ->redirect();
     }
+
 
     public function handleGoogleCallback(Request $request)
     {
