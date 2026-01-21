@@ -179,13 +179,13 @@ class GoogleAuthController extends Controller
             }
 
             DB::commit();
-           $frontend = config('app.frontend.url', 'https://myracepics.com');
-            // Redirect Angular
-            if (!$user->role) {
-                return redirect()->to(
-                    "{$frontend}/auth/google/select-role?user_id={$user->id}"
-                );
-            }
+        //    $frontend = config('app.frontend.url', 'https://myracepics.com');
+        //     // Redirect Angular
+        //     if (!$user->role) {
+        //         return redirect()->to(
+        //             "{$frontend}/auth/google/select-role?user_id={$user->id}"
+        //         );
+        //     }
 
             $token = $user->createToken('google-token')->plainTextToken;
             return redirect()->away(config('app.frontend_url') ."/auth/google/callback?" .http_build_query([
