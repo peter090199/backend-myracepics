@@ -270,7 +270,7 @@ class GoogleAuthController extends Controller
             $frontend = config('app.frontend_url', 'https://myracepics.com');
 
             // 🚨 Role not selected → go to role selection
-            if (!$user->role) {
+            if (!$user->id) {
                 return redirect()->away(
                     "{$frontend}/auth/google/select-role?user_id={$user->id}"
                 );
