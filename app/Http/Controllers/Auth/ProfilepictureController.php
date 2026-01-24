@@ -208,5 +208,29 @@ class ProfilepictureController extends Controller
         ]);
     }
 
+
+    public function getProfile()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        $code = $user->code;
+
+        // Get resource by code
+        $resource = Resource::where('code', $code)->first();
+
+        return response()->json([
+            'success' => true,
+            'message' => $user,       // user object
+            'resource' => $resource    // resource object
+        ]);
+    }
+
     
 }

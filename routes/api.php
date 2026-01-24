@@ -305,6 +305,7 @@
     //PROFILE   
     //Route::put('updateProfile', [ProfilepictureController::class, 'updateProfile']);
     Route::post('updateProfile', [ProfilepictureController::class, 'updateProfile']);
+    Route::get('getProfile', [ProfilepictureController::class, 'getProfile']);
 });
 
   
