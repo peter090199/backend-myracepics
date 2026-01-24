@@ -219,9 +219,7 @@ class ProfilepictureController extends Controller
                 'message' => 'Unauthenticated'
             ], 401);
         }
-
         $code = $user->code;
-
         // Get resource by code
         $resource = Resource::where('code', $code)->first();
 
