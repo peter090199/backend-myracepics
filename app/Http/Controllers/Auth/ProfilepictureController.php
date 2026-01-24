@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Models\Userprofile;
+use App\Models\Resource;
+
 class ProfilepictureController extends Controller
 {
     /**
@@ -123,67 +125,67 @@ class ProfilepictureController extends Controller
         //
     }
 
+
     public function updateProfile(Request $request)
     {
-        // 🔹 Get authenticated user
         $user = Auth::user();
-        $code = $user->code;           // e.g., Photographer
-        $roleCode = $user->role_code;  // e.g., PH
 
-        // 🔹 Validate request
+        if (empty($user->code)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot update profile: user code is missing.',
+            ], 400);
+        }
+
+        $code = $user->code;
+        $roleCode = $user->role_code;
+
+        // 🔹 Validate text fields (files optional)
         $validated = $request->validate([
-            'fname'         => 'required|string|max:50',
-            'mname'         => 'nullable|string|max:50',
-            'lname'         => 'required|string|max:50',
-            'contact_no'    => 'nullable|string|max:20',
-            'current_location' => 'nullable|string|max:100',
-            'date_birth'    => 'nullable|date',
-            'gender'        => 'nullable|string|max:20',
-            'textwatermak'  => 'nullable|string|max:50',
-            'logo'          => 'nullable|string',       // base64 or file
-            'profile_picture'   => 'nullable|string',       // base64 or file
+            'fname'           => 'required|string|max:50',
+            'mname'           => 'nullable|string|max:50',
+            'lname'           => 'required|string|max:50',
+            'contact_no'      => 'nullable|string|max:20',
+            'current_location'=> 'nullable|string|max:100',
+            'date_birth'      => 'nullable|date',
+            'gender'          => 'nullable|string|max:20',
+            'textwatermak'    => 'nullable|string|max:50',
+            'logo'            => 'nullable|file|image|max:2048',          // File object
+            'profile_picture' => 'nullable|file|image|max:2048',          // File object
         ]);
 
         // 🔹 Update text fields
-        $user->update($request->only([
-            'fname', 'mname', 'lname', 'contact_no', 
-            'current_location', 'date_birth', 'gender', 'textwatermak'
-        ]));
+        $user->update($validated);
 
-        // 🔹 Handle logo upload (base64)
-        if (!empty($validated['logo'])) {
-            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['logo']);
-            $imageData = str_replace(' ', '+', $imageData);
-
-            $fileName = 'logo-' . time() . '.png';
+        // 🔹 Handle logo file upload
+        if ($request->hasFile('logo')) {
+            $logo = $request->file('logo');
+            $fileName = 'logo-' . time() . '_' . $logo->getClientOriginalName();
             $relativePath = $roleCode . '/' . $code . '/' . $fileName;
 
-            Storage::disk('public')->put($relativePath, base64_decode($imageData));
+            $logo->storeAs('public/' . $roleCode . '/' . $code, $fileName);
             $user->brand_logo = asset('storage/' . $relativePath);
         }
 
-        // 🔹 Handle profile picture (base64)
-        if (!empty($validated['profile_picture'])) {
-            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['profile_picture']);
-            $imageData = str_replace(' ', '+', $imageData);
-
-            $fileName = 'profile-' . time() . '.png';
+        // 🔹 Handle profile picture upload
+        if ($request->hasFile('profile_picture')) {
+            $pic = $request->file('profile_picture');
+            $fileName = 'profile-' . time() . '_' . $pic->getClientOriginalName();
             $relativePath = $roleCode . '/' . $code . '/' . $fileName;
 
-            Storage::disk('public')->put($relativePath, base64_decode($imageData));
+            $pic->storeAs('public/' . $roleCode . '/' . $code, $fileName);
             $user->profile_pic = asset('storage/' . $relativePath);
         }
 
+        // 🔹 Save changes
         $user->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'user'    => $user
+            'user'    => $user,
         ]);
     }
-
-
     public function destroy(string $id)
     {
         //
