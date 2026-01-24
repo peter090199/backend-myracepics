@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 use App\Models\Userprofile;
 use App\Models\Resource;
 
+
+
 class ProfilepictureController extends Controller
 {
     /**
@@ -143,20 +145,22 @@ class ProfilepictureController extends Controller
             $roleCode = $user->role_code;
 
             $validated = $request->validate([
-                'fname' => 'required|string|max:50',
-                'mname' => 'nullable|string|max:50',
-                'lname' => 'required|string|max:50',
-                'contact_no' => 'nullable|string|max:20',
-                'current_location' => 'nullable|string|max:100',
-                'date_birth' => 'nullable|date',
-                'gender' => 'nullable|string|max:20',
-                'textwatermak' => 'nullable|string|max:50',
-                'logo' => 'nullable|file|image|max:2048',
-                'profile_picture' => 'nullable|file|image|max:2048',
+                'fname' => 'sometimes|required|string|max:50',
+                'mname' => 'sometimes|nullable|string|max:50',
+                'lname' => 'sometimes|required|string|max:50',
+                'contact_no' => 'sometimes|nullable|string|max:20',
+                'current_location' => 'sometimes|nullable|string|max:100',
+                'date_birth' => 'sometimes|nullable|date',
+                'gender' => 'sometimes|nullable|string|max:20',
+                'textwatermak' => 'sometimes|nullable|string|max:50',
+                'logo' => 'sometimes|nullable|file|image|max:2048',
+                'profile_picture' => 'sometimes|nullable|file|image|max:2048',
             ]);
 
-            $user->update($validated);
+            // Update user only with provided fields
+            $user->fill($validated);
 
+            // Handle logo upload if provided
             if ($request->hasFile('logo')) {
                 $logo = $request->file('logo');
                 $fileName = 'logo-' . time() . '_' . $logo->getClientOriginalName();
@@ -165,6 +169,7 @@ class ProfilepictureController extends Controller
                 $user->brand_logo = asset('storage/' . $relativePath);
             }
 
+            // Handle profile picture upload if provided
             if ($request->hasFile('profile_picture')) {
                 $pic = $request->file('profile_picture');
                 $fileName = 'profile-' . time() . '_' . $pic->getClientOriginalName();
@@ -175,13 +180,29 @@ class ProfilepictureController extends Controller
 
             $user->save();
 
-            return response()->json(['success' => true, 'message' => 'Profile updated', 'user' => $user]);
+            // Update resource where code = $code
+            $resource = Resource::where('code', $code)->first();
+            if ($resource) {
+                $resource->fill($validated);
+                $resource->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Profile updated',
+                'user' => $user
+            ]);
 
         } catch (\Exception $e) {
-            \Log::error('Profile update failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            \Log::error('Profile update failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json(['success' => false, 'message' => 'Server Error'], 500);
         }
     }
+
 
 
     public function destroy(string $id)
