@@ -127,7 +127,6 @@ class ProfilepictureController extends Controller
         //
     }
 
-
     public function updateProfile(Request $request)
     {
         try {
@@ -143,6 +142,8 @@ class ProfilepictureController extends Controller
 
             $code = $user->code;
             $roleCode = $user->role_code;
+
+            // Validate request
             $validated = $request->validate([
                 'fname' => 'sometimes|required|string|max:50',
                 'mname' => 'sometimes|nullable|string|max:50',
@@ -161,7 +162,7 @@ class ProfilepictureController extends Controller
                 $logo = $request->file('logo');
                 $fileName = 'logo-' . time() . '.' . $logo->getClientOriginalExtension();
                 $path = $logo->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-                $validated['logo'] = url(str_replace('public', 'storage', $path));
+                $validated['logo'] = str_replace('public/', 'storage/', $path);
             }
 
             // Handle profile picture upload
@@ -169,16 +170,22 @@ class ProfilepictureController extends Controller
                 $pic = $request->file('profile_picture');
                 $fileName = 'profile-' . time() . '.' . $pic->getClientOriginalExtension();
                 $path = $pic->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-                $validated['profile_picture'] = url(str_replace('public', 'storage', $path));
+                $validated['profile_picture'] = str_replace('public/', 'storage/', $path);
             }
 
-            // Update user
-            $user->update($validated);
+            // Update user table
+            $userFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak','logo','profile_picture'];
+            $userUpdate = array_intersect_key($validated, array_flip($userFields));
+            $user->update($userUpdate);
 
-            // Update resource where code = $code
+            // Update resources table
             $resource = Resource::where('code', $code)->first();
             if ($resource) {
-                $resource->update($validated);
+                $resourceFields = ['fname','mname','lname','contact_no','current_location','date_birth','gender','textwatermak','logo','profile_picture'];
+                $resourceUpdate = array_intersect_key($validated, array_flip($resourceFields));
+                $resource->update($resourceUpdate);
+            } else {
+                \Log::warning("Resource with code {$code} not found, cannot update");
             }
 
             return response()->json([
@@ -197,10 +204,5 @@ class ProfilepictureController extends Controller
         }
     }
 
-
-
-    public function destroy(string $id)
-    {
-        //
-    }
+    
 }
