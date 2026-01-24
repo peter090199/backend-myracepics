@@ -184,7 +184,7 @@ class ProfilepictureController extends Controller
              $profilename = 'profilepic';
             $relativePath = $roleCode . '/' . $code . '/' .  $profilename . '/' . $fileName;
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
-            $validated['profile_picture'] = asset('storage/' . $relativePath);
+            $validated['profile_picture'] = asset('storage/app/public/' . $relativePath);
         }
 
         // Update User table
