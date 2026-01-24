@@ -157,39 +157,34 @@ class ProfilepictureController extends Controller
                 'profile_picture' => 'sometimes|nullable|file|image|max:2048',
             ]);
 
-            // Update user only with provided fields
-            $user->fill($validated);
-
-            // Handle logo upload if provided
+            // Handle logo upload
             if ($request->hasFile('logo')) {
                 $logo = $request->file('logo');
-                $fileName = 'logo-' . time() . '_' . $logo->getClientOriginalName();
-                $relativePath = $roleCode . '/' . $code . '/' . $fileName;
-                $logo->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-                $user->brand_logo = asset('storage/' . $relativePath);
+                $fileName = 'logo-' . time() . '.' . $logo->getClientOriginalExtension();
+                $path = $logo->storeAs('public/' . $roleCode . '/' . $code, $fileName);
+                $validated['brand_logo'] = url(str_replace('public', 'storage', $path));
             }
 
-            // Handle profile picture upload if provided
+            // Handle profile picture upload
             if ($request->hasFile('profile_picture')) {
                 $pic = $request->file('profile_picture');
-                $fileName = 'profile-' . time() . '_' . $pic->getClientOriginalName();
-                $relativePath = $roleCode . '/' . $code . '/' . $fileName;
-                $pic->storeAs('public/' . $roleCode . '/' . $code, $fileName);
-                $user->profile_pic = asset('storage/' . $relativePath);
+                $fileName = 'profile-' . time() . '.' . $pic->getClientOriginalExtension();
+                $path = $pic->storeAs('public/' . $roleCode . '/' . $code, $fileName);
+                $validated['profile_pic'] = url(str_replace('public', 'storage', $path));
             }
 
-            $user->save();
+            // Update user
+            $user->update($validated);
 
             // Update resource where code = $code
             $resource = Resource::where('code', $code)->first();
             if ($resource) {
-                $resource->fill($validated);
-                $resource->save();
+                $resource->update($validated);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Profile updated',
+                'message' => 'Profile updated successfully',
                 'user' => $user
             ]);
 
