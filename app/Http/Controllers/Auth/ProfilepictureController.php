@@ -143,7 +143,6 @@ class ProfilepictureController extends Controller
 
             $code = $user->code;
             $roleCode = $user->role_code;
-
             $validated = $request->validate([
                 'fname' => 'sometimes|required|string|max:50',
                 'mname' => 'sometimes|nullable|string|max:50',
