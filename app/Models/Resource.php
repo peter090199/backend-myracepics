@@ -45,7 +45,11 @@ class Resource extends Model
         'h1_designation',
         'created_by',
         'updated_by',
-        'role'
+        'role',
+        'logo',
+        'textwatermak',
+        'profile_picture',
+        'gender'
     ];
 
 
