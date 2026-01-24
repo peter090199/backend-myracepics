@@ -302,6 +302,9 @@
     Route::get('events/getevents', [EventController::class, 'getEvents']);
     Route::get('events/getEventByUuid/{uuid}', [EventController::class, 'getEventByUuid']);
 
+    //PROFILE   
+    Route::post('updateProfile', [ProfilepictureController::class, 'updateprofile']);
+
 });
 
   
