@@ -144,7 +144,8 @@ class ProfilepictureController extends Controller
         }
 
         $request->validate([
-            'logo' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            'logo' => 'sometimes|nullable|string', // base64 or URL
+            'profile_picture' => 'sometimes|nullable|string', // base64 or URL
         ]);
 
         // example values (replace with real ones)
@@ -172,6 +173,21 @@ class ProfilepictureController extends Controller
             $user->logo = $relativePath;
             $user->save();
         }
+
+           // Handle profile_picture upload (base64)
+        if (!empty($validated['profile_picture'])) {
+            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['profile_picture']);
+            $imageData = str_replace(' ', '+', $imageData);
+
+            $fileName = 'profile-' . time() . '.png';
+             $profilename = 'profilepic';
+            $relativePath = $roleCode . '/' . $code . '/' .  $profilename . '/' . $fileName;
+            Storage::disk('public')->put($relativePath, base64_decode($imageData));
+            $validated['profile_picture'] = asset('storage/app/public/' . $relativePath);
+            $user->profile_picture = $relativePath;
+            $user->save();
+        }
+
 
         return response()->json([
             'success' => true,
