@@ -186,7 +186,7 @@ class ProfilepictureController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Images updated successfully',
-               
+            'data' =>$user
         ]);
     }
 
