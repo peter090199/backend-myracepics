@@ -145,7 +145,7 @@ class ProfilepictureController extends Controller
         }
 
         $request->validate([
-            'logo' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'logo' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         // example values (replace with real ones)
