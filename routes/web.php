@@ -6,6 +6,8 @@ use  App\Http\Controllers\Auth\PostController;
 use  App\Http\Controllers\MessageController;
 use  App\Events\MessageSent;
 use  App\Http\Controllers\Auth\GoogleAuthController;
+
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -19,24 +21,26 @@ use  App\Http\Controllers\Auth\GoogleAuthController;
 Route::get('/login', function () {
     return view('auth.signin');
 });
+Route::get('/test-upload', function () {
+    return view('auth.test-upload');
+});
+
+Route::get('/test-image', function () {
+    $img = Image::canvas(100, 100, '#ff0000');
+    $img->save(storage_path('app/public/watermark.jpg'));
+    return asset('storage/watermark.jpg');
+});
+
 
 Route::get("auth/google",[GoogleAuthController::class,"redirectToGoogle"])->name("redirect.google");
 Route::get("auth/google/callback",[GoogleAuthController::class,"handleGoogleCallback"]);
-
-
-
 Route::get('/', function () {
     return view('welcome');
 });
-
 Broadcast::routes(['middleware' => ['auth:api']]);
-
-
-//sample pusher notifiy realtime
 Route::get('/pusher', function () {
     return view('pusher');
 });
-
 Route::get('/pusher2', function () {
     return view('pusher2');
 });

@@ -41,8 +41,7 @@
     use App\Http\Controllers\StorageBackblaze\PhotoUploadController;
     use App\Http\Controllers\Events\EventController;
     use App\Http\Controllers\Auth\GoogleAuthController;
-
-
+    use App\Http\Controllers\Events\UploadController;
 
     /*
     |--------------------------------------------------------------------------
@@ -308,7 +307,8 @@
     Route::post('updateImage', [ProfilepictureController::class, 'updateImage']);
     Route::get('getProfile', [ProfilepictureController::class, 'getProfile']);
 
-    Route::post('photosupload/{uuid}', [EventController::class, 'upload']);
+    Route::post('upload', [UploadController::class, 'upload']);
+    Route::post('multipleUpload', [UploadController::class, 'multipleUpload']);
 });
 
   

@@ -11,6 +11,7 @@ use Intervention\Image\Facades\Image;
 
 class EventController extends Controller
 {
+    
     public function save(Request $request)
     {
         $validated = $request->validate([
@@ -235,7 +236,150 @@ class EventController extends Controller
         ]);
     }
 
-    public function upload(Request $request, $uuid)
+   public function upload(Request $request)
+{
+    // Validate inputs
+    $request->validate([
+        'photos.*' => 'required|image|max:10240', // max 10MB per image
+        'apply_watermark' => 'required|boolean',
+    ]);
+
+    $savedFiles = [];
+
+    if ($request->hasFile('photos')) {
+        foreach ($request->file('photos') as $file) {
+
+            // Generate unique file name
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            $storagePath = storage_path('app/public/uploads/' . $fileName);
+
+            try {
+                if ($request->apply_watermark) {
+                    // Load image with Intervention
+                    $img = Image::make($file->getRealPath());
+
+                    // Check if font exists; otherwise use default font
+                    $fontPath = public_path('fonts/arial.ttf');
+                    if (!file_exists($fontPath)) {
+                        $fontPath = null; // default font
+                    }
+
+                    // Apply watermark text
+                    $img->text('WATERMARK', $img->width() / 2, $img->height() / 2, function ($font) use ($fontPath) {
+                        if ($fontPath) $font->file($fontPath);
+                        $font->size(36);
+                        $font->color([255, 255, 255, 0.5]);
+                        $font->align('center');
+                        $font->valign('middle');
+                    });
+
+                    // Save to storage
+                    $img->save($storagePath);
+                } else {
+                    // Save without watermark
+                    $file->storeAs('public/uploads', $fileName);
+                }
+
+                $savedFiles[] = $fileName;
+
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error saving image: ' . $e->getMessage()
+                ], 500);
+            }
+        }
+    } else {
+        return response()->json([
+            'success' => false,
+            'message' => 'No files uploaded'
+        ], 400);
+    }
+
+    // Return JSON with uploaded files
+    return response()->json([
+        'success' => true,
+        'files' => $savedFiles
+    ]);
+}
+
+    public function uploadxxx(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $code = $user->code;
+        $roleCode = $user->role_code;
+
+        if (!$request->has('photos') || !is_array($request->input('photos'))) {
+            return response()->json(['success' => false, 'message' => 'Photos array is required'], 400);
+        }
+
+        $applyWatermark = $request->input('apply_watermark', true);
+        $uploadedFiles = [];
+
+        $folderId = Str::uuid()->toString(); // optional folder per upload
+
+        foreach ($request->input('photos') as $index => $photoBase64) {
+            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $photoBase64);
+            $imageData = str_replace(' ', '+', $imageData);
+
+            $decoded = base64_decode($imageData, true);
+            if ($decoded === false) {
+                return response()->json(['success' => false, 'message' => "Invalid base64 at index $index"], 400);
+            }
+
+            $fileName = 'photo-' . time() . '-' . $index . '.png';
+            $relativeOriginal = "$roleCode/$code/events/$folderId/original/$fileName";
+            $relativeWatermarked = "$roleCode/$code/events/$folderId/watermarked/$fileName";
+
+            foreach ([$relativeOriginal, $relativeWatermarked] as $path) {
+                $dir = storage_path('app/public/' . dirname($path));
+                if (!is_dir($dir)) mkdir($dir, 0755, true);
+            }
+
+            Storage::disk('public')->put($relativeOriginal, $decoded);
+
+            if ($applyWatermark) {
+                try {
+                    $image = Image::make($decoded)->orientate();
+                    $watermarkPath = storage_path('app/public/watermark.png');
+                    if (file_exists($watermarkPath)) {
+                        $watermark = Image::make($watermarkPath)
+                            ->resize(150, null, function ($c) { $c->aspectRatio(); $c->upsize(); })
+                            ->opacity(60);
+                        $image->insert($watermark, 'bottom-right', 15, 15);
+                    }
+                    Storage::disk('public')->put($relativeWatermarked, (string) $image->encode('png', 90));
+                } catch (\Throwable $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Watermark processing failed at photo #$index",
+                        'error' => $e->getMessage()
+                    ], 500);
+                }
+            } else {
+                Storage::disk('public')->put($relativeWatermarked, $decoded);
+            }
+
+            $uploadedFiles[] = [
+                'name' => $fileName,
+                'original' => asset('storage/' . $relativeOriginal),
+                'watermarked' => asset('storage/' . $relativeWatermarked),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Photos uploaded successfully',
+            'files' => $uploadedFiles
+        ]);
+    }
+
+
+    public function uploadx33(Request $request, $uuid)
     {
         $user = Auth::user();
 
