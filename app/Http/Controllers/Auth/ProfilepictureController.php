@@ -149,8 +149,8 @@ class ProfilepictureController extends Controller
         ]);
 
         // example values (replace with real ones)
-        $roleCode = $user->role ?? 'user';
-        $code = $user->code ?? $user->id;
+        $code = $user->code;
+        $roleCode = $user->role_code;
 
         if ($request->hasFile('logo')) {
 
