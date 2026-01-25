@@ -127,6 +127,50 @@ class ProfilepictureController extends Controller
         //
     }
 
+    public function updateImage(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated'], 401);
+        }
+
+        $request->validate([
+            'logo' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        // example values (replace with real ones)
+        $roleCode = $user->role ?? 'user';
+        $code = $user->code ?? $user->id;
+
+        if ($request->hasFile('logo')) {
+
+            // 🔥 delete old logo
+            if ($user->logo && Storage::disk('public')->exists($user->logo)) {
+                Storage::disk('public')->delete($user->logo);
+            }
+
+            $fileName = 'logo-' . time() . '.' . $request->file('logo')->extension();
+
+            $relativePath = $roleCode . '/' . $code . '/logo/' . $fileName;
+
+            // 📂 save into storage/app/public/...
+            Storage::disk('public')->putFileAs(
+                $roleCode . '/' . $code . '/logo',
+                $request->file('logo'),
+                $fileName
+            );
+
+            $user->logo = $relativePath;
+            $user->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'logo_url' => asset('storage/app/public/' . $user->logo)
+        ]);
+    }
+
      public function updateProfile(Request $request)
     {
         // 🔥 Get authenticated user
