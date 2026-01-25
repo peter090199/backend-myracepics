@@ -130,12 +130,14 @@ class ProfilepictureController extends Controller
     public function updateImage(Request $request)
     {
         $user = Auth::user();
+
         if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated'
             ], 401);
         }
+
         if (empty($user->code)) {
             return response()->json([
                 'success' => false,
@@ -143,58 +145,63 @@ class ProfilepictureController extends Controller
             ], 400);
         }
 
-        $request->validate([
-            'logo' => 'sometimes|nullable|string', // base64 or URL
-            'profile_picture' => 'sometimes|nullable|string', // base64 or URL
+        // ✅ Validate BASE64 strings
+        $validated = $request->validate([
+            'logo' => 'sometimes|nullable|string',
+            'profile_picture' => 'sometimes|nullable|string',
         ]);
 
-        // example values (replace with real ones)
         $code = $user->code;
         $roleCode = $user->role_code;
 
-        if ($request->hasFile('logo')) {
+        /* ================= LOGO (BASE64) ================= */
+        if (!empty($validated['logo'])) {
 
-            // 🔥 delete old logo
+            // delete old logo
             if ($user->logo && Storage::disk('public')->exists($user->logo)) {
                 Storage::disk('public')->delete($user->logo);
             }
 
-            $fileName = 'logo-' . time() . '.' . $request->file('logo')->extension();
+            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['logo']);
+            $imageData = str_replace(' ', '+', $imageData);
 
-            $relativePath = $roleCode . '/' . $code . '/logo/' . $fileName;
+            $fileName = 'logo-' . time() . '.png';
+            $relativePath = "$roleCode/$code/logo/$fileName";
 
-            // 📂 save into storage/app/public/...
-            Storage::disk('public')->putFileAs(
-                $roleCode . '/' . $code . '/logo',
-                $request->file('logo'),
-                $fileName
-            );
+            Storage::disk('public')->put($relativePath, base64_decode($imageData));
 
             $user->logo = $relativePath;
-            $user->save();
         }
 
-           // Handle profile_picture upload (base64)
+        /* ============ PROFILE PICTURE (BASE64) ============ */
         if (!empty($validated['profile_picture'])) {
+
+            // delete old profile picture
+            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
             $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['profile_picture']);
             $imageData = str_replace(' ', '+', $imageData);
 
             $fileName = 'profile-' . time() . '.png';
-             $profilename = 'profilepic';
-            $relativePath = $roleCode . '/' . $code . '/' .  $profilename . '/' . $fileName;
+            $relativePath = "$roleCode/$code/profilepic/$fileName";
+
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
-            $validated['profile_picture'] = asset('storage/app/public/' . $relativePath);
+
             $user->profile_picture = $relativePath;
-            $user->save();
         }
 
+        $user->save();
 
         return response()->json([
             'success' => true,
-            'logo_url' => asset('storage/app/public/' . $user->logo)
+            'logo_url' => $user->logo ? asset('storage/' . $user->logo) : null,
+            'profile_picture_url' => $user->profile_picture
+                ? asset('storage/' . $user->profile_picture)
+                : null
         ]);
     }
-
      public function updateProfile(Request $request)
     {
         // 🔥 Get authenticated user
