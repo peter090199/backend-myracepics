@@ -235,9 +235,8 @@ class EventController extends Controller
         ]);
     }
 
-  public function upload(Request $request, $uuid)
+public function upload(Request $request, $uuid)
 {
-    // 🔥 Get authenticated user
     $user = Auth::user();
 
     if (!$user) {
