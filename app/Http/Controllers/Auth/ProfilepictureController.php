@@ -158,11 +158,6 @@ class ProfilepictureController extends Controller
             if ($request->filled('logo')) {
 
                 $image = $request->logo;
-
-                if (!preg_match('/^data:image\/(\w+);base64,/', $image, $type)) {
-                    return response()->json(['message' => 'Invalid logo format'], 422);
-                }
-
                 $image = substr($image, strpos($image, ',') + 1);
                 $image = base64_decode($image);
 
@@ -189,11 +184,6 @@ class ProfilepictureController extends Controller
             if ($request->filled('profile_picture')) {
 
                 $image = $request->profile_picture;
-
-                if (!preg_match('/^data:image\/(\w+);base64,/', $image, $type)) {
-                    return response()->json(['message' => 'Invalid profile picture format'], 422);
-                }
-
                 $image = substr($image, strpos($image, ',') + 1);
                 $image = base64_decode($image);
 
