@@ -141,6 +141,10 @@ class ProfilepictureController extends Controller
 
         // ================= LOGO =================
          if (!empty($validated['logo'])) {
+            if ($user->logo && Storage::disk('public')->exists($user->logo)) {
+                Storage::disk('public')->delete($user->logo);
+            }
+
             $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['logo']);
             $imageData = str_replace(' ', '+', $imageData);
 
@@ -153,6 +157,10 @@ class ProfilepictureController extends Controller
 
         // ================= PROFILE PICTURE =================
         if (!empty($validated['profile_picture'])) {
+            if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
+                Storage::disk('public')->delete($user->profile_picture);
+            }
+
             $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['profile_picture']);
             $imageData = str_replace(' ', '+', $imageData);
 
