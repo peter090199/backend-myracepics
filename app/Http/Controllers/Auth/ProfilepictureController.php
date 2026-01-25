@@ -186,7 +186,8 @@ class ProfilepictureController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Images updated successfully',
-            'data' =>$userFields
+            'logo_url' => $user->logo ? asset('storage/' . $user->logo) : null,
+            'profile_picture_url' => $user->profile_picture ? asset('storage/' . $user->profile_picture) : null
         ]);
     }
 
