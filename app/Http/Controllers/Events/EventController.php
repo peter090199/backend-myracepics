@@ -235,7 +235,7 @@ class EventController extends Controller
         ]);
     }
 
-    public function upload(Request $request, $uuid)
+   public function upload(Request $request, $uuid)
     {
         try {
             $user = Auth::user();
@@ -251,19 +251,28 @@ class EventController extends Controller
             $roleCode = $user->role_code;
             $userCode = $user->code;
 
+            // Validate input
             $validated = $request->validate([
-                'photos.*' => 'required|image|mimes:jpeg,png|max:10240',
+                'photos' => 'required|array',
+                'photos.*' => 'required|string', // each photo is a base64 string
             ]);
-
-            $files = $request->file('photos');
-            if (!$files || count($files) === 0) {
-                return response()->json(['success' => false, 'message' => 'No photos uploaded'], 400);
-            }
 
             $uploadedFiles = [];
 
-            foreach ($files as $file) {
-                $fileName = 'photo-' . time() . '-' . Str::random(5) . '.' . $file->getClientOriginalExtension();
+            foreach ($validated['photos'] as $base64Image) {
+                // Remove base64 header if exists
+                $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $base64Image);
+                $imageData = str_replace(' ', '+', $imageData);
+
+                // Decode
+                $decoded = base64_decode($imageData);
+
+                if ($decoded === false) {
+                    continue; // skip invalid base64
+                }
+
+                // Generate filename
+                $fileName = 'photo-' . time() . '-' . Str::random(5) . '.png';
 
                 // Paths
                 $relativeOriginal = "$roleCode/$userCode/events/$uuid/original/$fileName";
@@ -274,16 +283,12 @@ class EventController extends Controller
                     $dir = storage_path('app/public/' . dirname($path));
                     if (!is_dir($dir)) mkdir($dir, 0755, true);
                 }
-                
-                // Save original
-                Storage::disk('public')->putFileAs(
-                    dirname($relativeOriginal),
-                    $file,
-                    basename($relativeOriginal)
-                );
 
-                // Create watermarked image
-                $image = Image::make($file->getRealPath());
+                // Save original image
+                Storage::disk('public')->put($relativeOriginal, $decoded);
+
+                // Create watermarked image using Intervention
+                $image = Image::make($decoded);
 
                 $watermarkPath = storage_path('app/public/watermark.jpg');
                 if (file_exists($watermarkPath)) {
@@ -291,13 +296,14 @@ class EventController extends Controller
                     $image->insert($watermark, 'bottom-right', 10, 10);
                 }
 
-                $imageData = (string) $image->encode('png');
-                Storage::disk('public')->put($relativeWatermarked, $imageData);
+                // Encode and save watermarked image
+                $imageDataWatermarked = (string) $image->encode('png');
+                Storage::disk('public')->put($relativeWatermarked, $imageDataWatermarked);
 
                 $uploadedFiles[] = [
+                    'name' => $fileName,
                     'original' => asset('storage/' . $relativeOriginal),
                     'watermarked' => asset('storage/' . $relativeWatermarked),
-                    'name' => $file->getClientOriginalName(),
                 ];
             }
 
@@ -316,95 +322,96 @@ class EventController extends Controller
         }
     }
 
-public function uploadxx(Request $request, $uuid)
-{
-    try {
-        // 🔥 Get authenticated user
-        $user = Auth::user();
 
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated'
-            ], 401);
-        }
+    public function uploadxx(Request $request, $uuid)
+    {
+        try {
+            // 🔥 Get authenticated user
+            $user = Auth::user();
 
-        if (empty($user->code)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User code missing'
-            ], 400);
-        }
-
-        $code = $user->code;
-        $roleCode = $user->role_code;
-
-        // Validate input
-        $validated = $request->validate([
-            'photos.*' => 'required|image|mimes:jpeg,png|max:10240', // 10MB max
-        ]);
-
-        $uploadedFiles = [];
-
-        $files = $request->file('photos');
-
-        if (!$files || count($files) === 0) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No photos uploaded'
-            ], 400);
-        }
-
-        foreach ($files as $file) {
-
-            // Generate file name
-            $fileName = 'photo-' . time() . '-' . Str::random(5) . '.' . $file->getClientOriginalExtension();
-
-            // Relative path in storage: role/code/event/photos
-            $relativePath = $roleCode . '/' . $code . '/events/' . $uuid . '/' . $fileName;
-
-            // Ensure directory exists
-            $dir = dirname(storage_path('app/public/' . $relativePath));
-            if (!file_exists($dir)) {
-                mkdir($dir, 0755, true);
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated'
+                ], 401);
             }
 
-            // Open image using Intervention Image
-            $image = Image::make($file->getRealPath());
-
-            // 🔹 Apply watermark if exists
-            if (Storage::disk('public')->exists('watermark.jpg')) {
-                $watermark = Image::make(public_path('storage/watermark.jpg'));
-                $image->insert($watermark, 'bottom-right', 10, 10);
+            if (empty($user->code)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User code missing'
+                ], 400);
             }
 
-            // Encode image to PNG
-            $imageData = (string) $image->encode('png');
+            $code = $user->code;
+            $roleCode = $user->role_code;
 
-            // Save to storage
-            Storage::disk('public')->put($relativePath, $imageData);
+            // Validate input
+            $validated = $request->validate([
+                'photos.*' => 'required|image|mimes:jpeg,png|max:10240', // 10MB max
+            ]);
 
-            // Add uploaded file info
-            $uploadedFiles[] = [
-                'name' => $file->getClientOriginalName(),
-                'url' => asset('storage/app/public/' . $relativePath),
-            ];
+            $uploadedFiles = [];
+
+            $files = $request->file('photos');
+
+            if (!$files || count($files) === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No photos uploaded'
+                ], 400);
+            }
+
+            foreach ($files as $file) {
+
+                // Generate file name
+                $fileName = 'photo-' . time() . '-' . Str::random(5) . '.' . $file->getClientOriginalExtension();
+
+                // Relative path in storage: role/code/event/photos
+                $relativePath = $roleCode . '/' . $code . '/events/' . $uuid . '/' . $fileName;
+
+                // Ensure directory exists
+                $dir = dirname(storage_path('app/public/' . $relativePath));
+                if (!file_exists($dir)) {
+                    mkdir($dir, 0755, true);
+                }
+
+                // Open image using Intervention Image
+                $image = Image::make($file->getRealPath());
+
+                // 🔹 Apply watermark if exists
+                if (Storage::disk('public')->exists('watermark.jpg')) {
+                    $watermark = Image::make(public_path('storage/watermark.jpg'));
+                    $image->insert($watermark, 'bottom-right', 10, 10);
+                }
+
+                // Encode image to PNG
+                $imageData = (string) $image->encode('png');
+
+                // Save to storage
+                Storage::disk('public')->put($relativePath, $imageData);
+
+                // Add uploaded file info
+                $uploadedFiles[] = [
+                    'name' => $file->getClientOriginalName(),
+                    'url' => asset('storage/app/public/' . $relativePath),
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Photos uploaded successfully',
+                'files' => $uploadedFiles,
+            ]);
+        } catch (\Exception $e) {
+            // Return error for debugging
+            return response()->json([
+                'success' => false,
+                'message' => 'Upload failed',
+                'error' => $e->getMessage(),
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Photos uploaded successfully',
-            'files' => $uploadedFiles,
-        ]);
-    } catch (\Exception $e) {
-        // Return error for debugging
-        return response()->json([
-            'success' => false,
-            'message' => 'Upload failed',
-            'error' => $e->getMessage(),
-        ], 500);
     }
-}
 
 
 }
