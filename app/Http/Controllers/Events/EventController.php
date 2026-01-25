@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Event\Events;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
-
+use Intervention\Image\Facades\Image;
 
 class EventController extends Controller
 {
@@ -99,46 +99,6 @@ class EventController extends Controller
             'event'   => $event
         ]);
     }
-
-    // public function save(Request $request)
-    // {
-    //     // Validate incoming request
-    //     $validated = $request->validate([
-    //         'title'    => 'required|string|max:255',
-    //         'location' => 'required|string|max:255',
-    //         'date'     => 'required|date',
-    //         'category' => 'required|string|max:100',
-    //         'image'    => 'nullable|string', // base64 image from Angular
-    //     ]);
-
-    //     $imagePath = null;
-
-    //     if (!empty($validated['image'])) {
-    //         $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
-    //         $imageData = str_replace(' ', '+', $imageData);
-    //         $imageName = 'event-' . time() . '.png';
-
-    //         Storage::disk('public')->put('events/' . $imageName, base64_decode($imageData));
-
-    //         // Full public URL
-    //         $imagePath = asset('storage/events/' . $imageName);
-    //     }
-    //     // Create event in DB
-    //     $imagePath = $imagePath ? [$imagePath] : [];
-    //     $event = Events::create([
-    //         'title'    => $validated['title'],
-    //         'location' => $validated['location'],
-    //         'date'     => $validated['date'],
-    //         'category' => $validated['category'],
-    //         'image'    => json_encode($imagePath),
-    //     ]);
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Event saved successfully',
-    //         'event'   => $event
-    //     ]);
-    // }
 
     public function delete($id)
     {
@@ -275,6 +235,72 @@ class EventController extends Controller
         ]);
     }
 
+
+    public function upload(Request $request, $uuid)
+    {
+        // 🔥 Get authenticated user
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        if (empty($user->code)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User code missing'
+            ], 400);
+        }
+
+        $code = $user->code;
+        $roleCode = $user->role_code;
+
+        // Validate input
+        $validated = $request->validate([
+            'photos.*' => 'required|image|mimes:jpeg,png|max:10240', // 10MB max
+        ]);
+
+        $uploadedFiles = [];
+
+        foreach ($request->file('photos') as $file) {
+
+            // Generate file name
+            $fileName = 'photo-' . time() . '-' . Str::random(5) . '.' . $file->getClientOriginalExtension();
+
+            // Relative path in storage: role/code/event/photos
+            $relativePath = $roleCode . '/' . $code . '/events/' . $uuid . '/' . $fileName;
+
+            // Open image using Intervention Image
+            $image = Image::make($file->getRealPath());
+
+            // 🔹 Apply watermark if exists
+            if (Storage::disk('public')->exists('watermark.jpg')) {
+                $watermark = Image::make(public_path('storage/watermark.jpg'));
+                $image->insert($watermark, 'bottom-right', 10, 10);
+            }
+
+            // Convert to base64 for saving (matching updateImage pattern)
+            $imageData = (string) $image->encode('png');
+
+            // Save to storage
+            Storage::disk('public')->put($relativePath, $imageData);
+
+            // Add uploaded file info
+            $uploadedFiles[] = [
+                'name' => $file->getClientOriginalName(),
+                'url' => asset('storage/' . $relativePath),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Photos uploaded successfully',
+            'files' => $uploadedFiles,
+        ]);
+    }
 
 
 }
