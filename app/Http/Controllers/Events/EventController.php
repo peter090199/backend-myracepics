@@ -235,7 +235,88 @@ class EventController extends Controller
         ]);
     }
 
-public function upload(Request $request, $uuid)
+    public function upload(Request $request, $uuid)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            }
+
+            if (empty($user->code)) {
+                return response()->json(['success' => false, 'message' => 'User code missing'], 400);
+            }
+
+            $roleCode = $user->role_code;
+            $userCode = $user->code;
+
+            $validated = $request->validate([
+                'photos.*' => 'required|image|mimes:jpeg,png|max:10240',
+            ]);
+
+            $files = $request->file('photos');
+            if (!$files || count($files) === 0) {
+                return response()->json(['success' => false, 'message' => 'No photos uploaded'], 400);
+            }
+
+            $uploadedFiles = [];
+
+            foreach ($files as $file) {
+                $fileName = 'photo-' . time() . '-' . Str::random(5) . '.' . $file->getClientOriginalExtension();
+
+                // Paths
+                $relativeOriginal = "$roleCode/$userCode/events/$uuid/original/$fileName";
+                $relativeWatermarked = "$roleCode/$userCode/events/$uuid/watermarked/$fileName";
+
+                // Ensure directories exist
+                foreach ([$relativeOriginal, $relativeWatermarked] as $path) {
+                    $dir = storage_path('app/public/' . dirname($path));
+                    if (!is_dir($dir)) mkdir($dir, 0755, true);
+                }
+                
+                // Save original
+                Storage::disk('public')->putFileAs(
+                    dirname($relativeOriginal),
+                    $file,
+                    basename($relativeOriginal)
+                );
+
+                // Create watermarked image
+                $image = Image::make($file->getRealPath());
+
+                $watermarkPath = storage_path('app/public/watermark.jpg');
+                if (file_exists($watermarkPath)) {
+                    $watermark = Image::make($watermarkPath);
+                    $image->insert($watermark, 'bottom-right', 10, 10);
+                }
+
+                $imageData = (string) $image->encode('png');
+                Storage::disk('public')->put($relativeWatermarked, $imageData);
+
+                $uploadedFiles[] = [
+                    'original' => asset('storage/' . $relativeOriginal),
+                    'watermarked' => asset('storage/' . $relativeWatermarked),
+                    'name' => $file->getClientOriginalName(),
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Photos uploaded successfully',
+                'files' => $uploadedFiles,
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Upload failed',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+public function uploadxx(Request $request, $uuid)
 {
     try {
         // 🔥 Get authenticated user
@@ -306,7 +387,7 @@ public function upload(Request $request, $uuid)
             // Add uploaded file info
             $uploadedFiles[] = [
                 'name' => $file->getClientOriginalName(),
-                'url' => asset('storage/' . $relativePath),
+                'url' => asset('storage/app/public/' . $relativePath),
             ];
         }
 
