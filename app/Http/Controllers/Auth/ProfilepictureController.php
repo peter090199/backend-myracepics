@@ -137,12 +137,12 @@ class ProfilepictureController extends Controller
         //     ], 401);
         // }
 
-        if (empty($user->code)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User code missing'
-            ], 400);
-        }
+        // if (empty($user->code)) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'User code missing'
+        //     ], 400);
+        // }
 
         $request->validate([
             'logo' => 'required|image|mimes:jpg,jpeg,png|max:2048',
