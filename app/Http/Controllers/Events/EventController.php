@@ -298,7 +298,7 @@ class EventController extends Controller
         }
 
         // Save original
-        Storage::disk('app/public')->put($relativeOriginal, $decoded);
+        Storage::disk('public')->put($relativeOriginal, $decoded);
 
         // Save watermarked
         if ($applyWatermark) {
