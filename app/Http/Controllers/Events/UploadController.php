@@ -8,10 +8,94 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Str;
+use Intervention\Image\ImageManager;
 
 class UploadController extends Controller
 {
+
     public function multipleUpload(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $request->validate([
+            'photos' => 'required|array',
+            'photos.*' => 'required|string',
+            'apply_watermark' => 'boolean'
+        ]);
+
+        $applyWatermark = $request->boolean('apply_watermark', true);
+
+        $manager = ImageManager::gd(); // ✅ Intervention v3
+        $folderId = Str::uuid()->toString();
+
+        $uploaded = [];
+
+        foreach ($request->photos as $index => $photo) {
+
+            // ✅ Detect & clean base64
+            if (preg_match('/^data:image\/(\w+);base64,/', $photo, $type)) {
+                $photo = substr($photo, strpos($photo, ',') + 1);
+                $ext = strtolower($type[1]);
+            } else {
+                $ext = 'png'; // default
+            }
+
+            $decoded = base64_decode(str_replace(' ', '+', $photo), true);
+            if ($decoded === false) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Invalid Base64 at index $index"
+                ], 400);
+            }
+
+            $fileName = "photo-$index-$folderId.$ext";
+
+            $originalPath = "uploads/$folderId/original/$fileName";
+            $watermarkedPath = "uploads/$folderId/watermarked/$fileName";
+
+            // ✅ Save original
+            Storage::disk('public')->put($originalPath, $decoded);
+
+            // ✅ Watermark logic
+            if ($applyWatermark) {
+                $image = $manager->read($decoded);
+
+                $watermarkPath = public_path('images/watermark.jpg');
+                if (file_exists($watermarkPath)) {
+                    $image->place(
+                        $watermarkPath,
+                        'bottom-right',
+                        10,
+                        10,
+                        25 // opacity
+                    );
+                }
+
+                Storage::disk('public')->put(
+                    $watermarkedPath,
+                    (string) $image->encode($ext, 90)
+                );
+            } else {
+                Storage::disk('public')->put($watermarkedPath, $decoded);
+            }
+
+            $uploaded[] = [
+                'original' => asset("storage/$originalPath"),
+                'watermarked' => asset("storage/$watermarkedPath"),
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'files' => $uploaded
+        ]);
+    }
+
+    
+    public function multipleUploadxx(Request $request)
     {
         $user = Auth::user();
         if (!$user) {
