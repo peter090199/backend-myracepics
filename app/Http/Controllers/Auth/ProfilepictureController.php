@@ -139,9 +139,8 @@ class ProfilepictureController extends Controller
             'profile_picture' => 'sometimes|nullable|string', // base64 string
         ]);
 
-        // Handle logo upload (base64)
+        // ================= LOGO =================
         if (!empty($validated['logo'])) {
-
             // Delete old logo
             if ($user->logo && Storage::disk('public')->exists($user->logo)) {
                 Storage::disk('public')->delete($user->logo);
@@ -154,17 +153,14 @@ class ProfilepictureController extends Controller
             $logoname = 'logo';
             $relativePath = "$roleCode/$code/$logoname/$fileName";
 
-            // Make directory if not exists
             Storage::disk('public')->makeDirectory("$roleCode/$code/$logoname");
-
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
 
             $user->logo = $relativePath;
         }
 
-        // Handle profile_picture upload (base64)
+        // ================= PROFILE PICTURE =================
         if (!empty($validated['profile_picture'])) {
-
             // Delete old profile picture
             if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
                 Storage::disk('public')->delete($user->profile_picture);
@@ -177,15 +173,30 @@ class ProfilepictureController extends Controller
             $profilename = 'profilepic';
             $relativePath = "$roleCode/$code/$profilename/$fileName";
 
-            // Make directory if not exists
             Storage::disk('public')->makeDirectory("$roleCode/$code/$profilename");
-
             Storage::disk('public')->put($relativePath, base64_decode($imageData));
 
             $user->profile_picture = $relativePath;
         }
 
+        // Save user
         $user->save();
+
+        // ================= UPDATE RESOURCE TABLE =================
+        $resource = Resource::where('code', $code)->first();
+        if ($resource) {
+            $resourceFields = ['logo', 'profile_picture']; // we only update the images
+            $resourceUpdate = [];
+
+            // Copy updated fields from $user
+            foreach ($resourceFields as $field) {
+                if (!empty($user->$field)) {
+                    $resourceUpdate[$field] = $user->$field;
+                }
+            }
+
+            $resource->update($resourceUpdate);
+        }
 
         return response()->json([
             'success' => true,
