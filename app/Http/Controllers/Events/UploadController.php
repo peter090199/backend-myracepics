@@ -48,7 +48,7 @@ class UploadController extends Controller
         // $relativePath = $roleCode . '/' . $code . '/' . $fileName;
         // Storage::disk('public')->put($relativePath, base64_decode($imageData));
         // $imagePath = asset('storage/app/public/' . $relativePath);
-        
+
         $baseDir      = storage_path("app/public/{$roleCode}/{$code}/{$request->evnt_id}");
         $originalDir  = "{$baseDir}/original";
         $watermarkDir = "{$baseDir}/watermark";
@@ -131,7 +131,6 @@ class UploadController extends Controller
             }
 
             // Logo watermark
-              $imagePath = asset('storage/app/public/' . $relativePath);
             $logoPath = storage_path('app/public/watermark.png');
             if (file_exists($logoPath)) {
                 $logo = $manager->read($logoPath)->scale(120, null, function ($constraint) {
