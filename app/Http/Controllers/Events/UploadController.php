@@ -374,8 +374,8 @@ class UploadController extends Controller
             ->orderBy('created_at','desc')
             ->get();
 
-        $watermarkDbPath = "storage/app/public/{$watermarkDir}/{$filename}";
-        
+         $watermarkDbPath = "storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/" . $img->img_name;
+
         $data = $images->map(function($img){
             return [
                 'img_id'        => $img->img_id,
