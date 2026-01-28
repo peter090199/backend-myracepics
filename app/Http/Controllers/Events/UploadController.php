@@ -178,9 +178,6 @@ class UploadController extends Controller
 
     public function uploadBase64(Request $request)
     {
-        // ----------------------
-        // AUTH CHECK
-        // ----------------------
         $user = Auth::user();
         if (!$user) {
             return response()->json([
