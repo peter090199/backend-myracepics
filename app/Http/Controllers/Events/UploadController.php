@@ -321,7 +321,6 @@ class UploadController extends Controller
 
             // Save watermark image
             $image->save($watermarkAbsolutePath, 90);
-
             // ----------------------
             // SAVE DETAIL
             // ----------------------
@@ -347,7 +346,7 @@ class UploadController extends Controller
 
             $uploaded[] = [
                 'img_id'        => $detail->img_id,
-                'watermark_url' => asset('storage/' . $watermarkRelativePath),
+                'watermark_url' => $watermarkDbPath,
             ];
         }
 
