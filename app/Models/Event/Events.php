@@ -35,7 +35,7 @@ class Events extends Model
 
         static::creating(function ($model) {
             if (empty($model->evnt_id)) {
-                $model->evnt_id = (string) Str::uuid();
+                $model->evnt_id = (string) Str::evnt_id();
             }
         });
     }
