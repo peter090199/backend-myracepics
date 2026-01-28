@@ -299,7 +299,7 @@
     Route::delete('events/delete/{id}', [EventController::class, 'delete']);
     Route::put('events/update/{id}', [EventController::class, 'update']);
     Route::get('events/getevents', [EventController::class, 'getEvents']);
-    Route::get('events/getEventByUuid/{uuid}', [EventController::class, 'getEventByUuid']);
+    Route::get('events/getEventByUuid/{evnt_id}', [EventController::class, 'getEventByUuid']);
 
     //PROFILE   
     //Route::put('updateProfile', [ProfilepictureController::class, 'updateProfile']);
