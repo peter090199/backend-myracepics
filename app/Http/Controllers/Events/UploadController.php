@@ -129,7 +129,7 @@ class UploadController extends Controller
                     }
                 }
             }
-
+        
             // Logo watermark
             $logoPath = storage_path('app/public/watermark.jpg');
             if (file_exists($logoPath)) {
