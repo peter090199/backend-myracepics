@@ -424,6 +424,143 @@ Route::get('/diagonalwatermarklogo2', function () {
 });
 
 
+
+Route::get('/diagonalwatermarkText', function () {
+
+    $manager = ImageManager::gd();
+    $basePath = storage_path('app/public/profile.jpg');
+    if (!file_exists($basePath)) {
+        return response()->json(['success' => false, 'message' => 'Base image missing'], 404);
+    }
+    $image = $manager->read($basePath);
+    $imgW = $image->width();
+    $imgH = $image->height();
+
+    // =============================
+    // TEXT WATERMARK (REPEATED)
+    // =============================
+    $text = 'PITIK NI ELIZABETH';
+    $fontSize = max(14, intval($imgW / 60));
+    $opacity = 1;
+
+    $gapX = $fontSize * 12;
+    $gapY = $fontSize * 8;
+    $angle = -45;
+
+    // Slide increment per column for staggered diagonal effect
+    $slideStep = intval($fontSize * 2);
+
+    for ($y = -$imgH; $y < $imgH * 2; $y += $gapY) {
+        for ($x = -$imgW; $x < $imgW * 2; $x += $gapX) {
+
+            // Calculate staggered slide offset per column
+            $slideOffset = ($y / $gapY) * $slideStep;
+
+            // Shadow text for readability
+            $image->text($text, $x + $slideOffset + 2, $y + 2, function ($font) use ($fontSize, $angle) {
+                $font->size($fontSize);
+                $font->color('rgba(255, 247, 247, 0)');
+                $font->angle($angle);
+            });
+
+            // Main watermark text
+            $image->text($text, $x + $slideOffset, $y, function ($font) use ($fontSize, $opacity, $angle) {
+                $font->size($fontSize);
+                 $font->color('rgba(255, 248, 248, 0.98)');
+                $font->angle($angle);
+            });
+        }
+    }
+
+    // =============================
+    // OPTIONAL LOGO IMAGE (BOTTOM-RIGHT)
+    // =============================
+    $logoPath = storage_path('app/public/watermark.png');
+    if (file_exists($logoPath)) {
+        $logo = $manager->read($logoPath);
+        $logo->scale(120);
+
+        $image->place($logo, 'bottom-right', 10, 10, 80);
+    }
+
+    // =============================
+    // Save image
+    // =============================
+    $savePath = storage_path('app/public/diagonal-watermarked.jpg');
+    $image->save($savePath, 90);
+
+    return response()->json([
+        'success' => true,
+        'url' => asset('storage/diagonal-watermarked.jpg')
+    ]);
+});
+
+
+Route::get('/diagonalwatermarkslide22', function () {
+
+    $manager = ImageManager::gd();
+    $basePath = storage_path('app/public/profile.jpg');
+    if (!file_exists($basePath)) {
+        return response()->json(['success' => false, 'message' => 'Base image missing'], 404);
+    }
+    $image = $manager->read($basePath);
+    $imgW = $image->width();
+    $imgH = $image->height();
+
+    $text = '© Juan Dela Cruz Photography';
+
+    $fontSize = max(12, intval($imgW / 60));
+    $opacity = 0.3;
+
+    $gapX = $fontSize * 12;
+    $gapY = $fontSize * 8;
+    $angle = -45;
+
+    // Slide increment per column for staggered diagonal effect
+    $slideStep = intval($fontSize * 2);
+
+    for ($y = -$imgH; $y < $imgH * 2; $y += $gapY) {
+        for ($x = -$imgW; $x < $imgW * 2; $x += $gapX) {
+
+            // Calculate staggered slide offset per column
+            $slideOffset = ($y / $gapY) * $slideStep;
+
+            // Shadow text for readability
+            $image->text($text, $x + $slideOffset + 2, $y + 2, function ($font) use ($fontSize, $angle) {
+                $font->size($fontSize);
+                $font->color('rgba(0,0,0,0.3)');
+                $font->angle($angle);
+            });
+
+            // Main watermark text
+            $image->text($text, $x + $slideOffset, $y, function ($font) use ($fontSize, $opacity, $angle) {
+                $font->size($fontSize);
+                $font->color("rgba(255,255,255,$opacity)");
+                $font->angle($angle);
+            });
+        }
+    }
+
+    // Optional logo bottom-right
+    $logoPath = storage_path('app/public/watermark.png');
+    if (file_exists($logoPath)) {
+        $logo = $manager->make($logoPath)->resize(120, null, function ($constraint) {
+            $constraint->aspectRatio();
+        });
+
+        $image->insert($logo, 'bottom-right', 10, 10);
+    }
+
+    $savePath = storage_path('app/public/diagonal-watermarked.jpg');
+    $image->save($savePath, 90);
+
+    return response()->json([
+        'success' => true,
+        'url' => asset('storage/diagonal-watermarked.jpg')
+    ]);
+});
+
+
 Route::get('/preview', function () {
     return view('auth.test-upload');
 });

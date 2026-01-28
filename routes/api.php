@@ -308,6 +308,7 @@
     Route::get('getProfile', [ProfilepictureController::class, 'getProfile']);
 
     Route::post('upload', [UploadController::class, 'upload']);
+    Route::post('uploadBase64', [UploadController::class, 'uploadBase64']);
     Route::post('multipleUpload', [UploadController::class, 'multipleUpload']);
 });
 

@@ -21,7 +21,7 @@ class Events extends Model
         'date',
         'category',
         'image',
-        'uuid', // add uuid to fillable
+        'evnt_id',
         'code',
         'role_code'
     ];
@@ -34,8 +34,8 @@ class Events extends Model
         parent::boot();
 
         static::creating(function ($model) {
-            if (empty($model->uuid)) {
-                $model->uuid = (string) Str::uuid();
+            if (empty($model->evnt_id)) {
+                $model->evnt_id = (string) Str::uuid();
             }
         });
     }
