@@ -362,6 +362,39 @@ class UploadController extends Controller
         ]);
     }
 
+    public function getImagesByEventById($evnt_id)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success'=>false,'message'=>'Unauthenticated'],401);
+        }
+
+        $images = ImagesUpload::where('evnt_id',$evnt_id)
+            ->where('code',$user->code)
+            ->orderBy('created_at','desc')
+            ->get();
+
+        $data = $images->map(function($img){
+            return [
+                'img_id'        => $img->img_id,
+                'img_name'      => $img->img_name,
+                'original_url'  => asset(str_replace('storage/app/public/', 'storage/', $img->original_path)),
+                'watermark_url' => asset(str_replace('storage/app/public/', 'storage/', $img->watermark_path)),
+                'img_price'     => $img->img_price,
+                'img_qty'       => $img->img_qty,
+                'created_at'    => $img->created_at->toDateTimeString(),
+            ];
+        });
+
+        return response()->json([
+            'success'       => true,
+            'evnt_id'       => $evnt_id,
+            'total_images'  => $data->count(),
+            'images'        => $data,
+        ]);
+    }
+
+
     public function download($imageId)
     {
         $user = Auth::user();
