@@ -129,7 +129,7 @@ class UploadController extends Controller
                     }
                 }
             }
-        
+
             // Logo watermark
             $logoPath = storage_path('app/public/watermark.jpg');
             if (file_exists($logoPath)) {
@@ -153,8 +153,8 @@ class UploadController extends Controller
                 'evnt_name'     => $request->evnt_name,
                 'img_id'        => (string) Str::uuid(),
                 'img_name'      => $filename,
-                'original_path' => "storage/{$code}/{$request->evnt_id}/original/{$filename}",
-                'watermark_path'=> "storage/{$code}/{$request->evnt_id}/watermark/{$filename}",
+                'original_path' => $originalPath,
+                'watermark_path'=>  $watermarkPath,
                 'img_price'     => $request->img_price ?? 0,
                 'img_qty'       => $request->img_qty ?? 1,
                 'platform_fee'  => $request->platform_fee ?? 0,
@@ -164,15 +164,13 @@ class UploadController extends Controller
             $uploaded[] = [
                 'img_id'    => $detail->img_id,
                 'img_name'  => $detail->img_name,
-            //  'original'  => $detail->original_path,
                 'watermark' => $detail->watermark_path,
             ];
         }
 
         return response()->json([
             'success'  => true,
-            'header'   => $eventHeader,
-            'uploaded' => $uploaded,
+            'messages' => count($uploaded),
         ]);
     }
 
