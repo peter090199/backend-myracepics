@@ -310,6 +310,7 @@
     //event images upload photographer
     Route::post('uploadimages', [UploadController::class, 'uploadBase64']);
     Route::get('getImagesByEventById/{evnt_id}', [UploadController::class, 'getImagesByEventById']);
+    Route::get('getImagesByEvent/{evnt_id}', [UploadController::class, 'getImagesByEvent']);
 });
 
   
