@@ -248,7 +248,7 @@ class UploadController extends Controller
             return [
                 'img_id'        => $img->img_id,
                 'img_name'      => $img->img_name,
-                'watermark_url' => asset("storage/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}"),
+                'watermark_url' => asset("storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}"),
                 'img_price'     => $img->img_price,
                 'img_qty'       => $img->img_qty,
                 'created_at'    => $img->created_at->toDateTimeString(),
