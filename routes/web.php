@@ -7,6 +7,7 @@ use  App\Http\Controllers\MessageController;
 use  App\Events\MessageSent;
 use  App\Http\Controllers\Auth\GoogleAuthController;
 use Intervention\Image\ImageManager;
+use App\Http\Controllers\Events\UploadController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -615,4 +616,13 @@ Route::get('/test-broadcast', function () {
         'success' => true,
         'broadcasted_data' => $message
     ]);
+
+
+
+    //myracepics view
+    // routes/web.php
+    Route::get('/image/preview/{evnt_id}', [UploadController::class, 'preview'])
+    ->name('image.preview')
+    ->middleware(['signed']);
+
 });

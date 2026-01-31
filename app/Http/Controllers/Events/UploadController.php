@@ -274,6 +274,7 @@ class UploadController extends Controller
         ]);
     }
 
+    
     public function getImagesByEvent($evnt_id)
     {
         $user = Auth::user();
