@@ -768,7 +768,7 @@ public function uploadx222(Request $request, $uuid)
                 'event_image_id',
                 'role_code',
                 'code',
-                'event_id',
+                'evnt_id',
                 'evnt_name',
                 'fullname',
                 'watermark_path',
