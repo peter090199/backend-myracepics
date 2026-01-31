@@ -226,6 +226,7 @@ class UploadController extends Controller
     //     ]);
     // }
 
+    //images by own photographer
     public function getImagesByEventById($evnt_id)
     {
         $user = Auth::user();

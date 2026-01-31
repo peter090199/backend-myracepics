@@ -311,7 +311,7 @@
     //getimages for event by photographer
     Route::get('getImagesByEventById/{evnt_id}', [UploadController::class, 'getImagesByEventById']);
 
-    
+
     Route::get('getImagesByEvent/{evnt_id}', [UploadController::class, 'getImagesByEvent']);
     
     //remove watermark
@@ -321,7 +321,10 @@
 
     //getphotographer
     Route::get('getPhotographers', [UsersActive::class, 'getPhotographers']);
-    Route::get('getImagesByEventId/{code}/{evnt_id}', [EventController::class, 'getImagesByCode']); 
+
+    //setFilterByPhotographer 
+    Route::get('setFilterByPhotographer/{code}/{evnt_id}', [EventController::class, 'setFilterByPhotographer']); 
+
     Route::get('images/{code}', [EventController::class, 'getImagesByCode']);
 
 
