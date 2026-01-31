@@ -42,7 +42,7 @@
     use App\Http\Controllers\Events\EventController;
     use App\Http\Controllers\Auth\GoogleAuthController;
     use App\Http\Controllers\Events\UploadController;
-
+    use App\Http\Controllers\Events\UsersActive;
     /*
     |--------------------------------------------------------------------------
     | API Routes
@@ -315,6 +315,9 @@
     ->name('image.preview')
     ->middleware(['signed', 'throttle:30,1']);
 
+    //getphotographer
+     Route::get('getPhotographers', [UsersActive::class, 'getPhotographers']);
+        
 });
 
   
