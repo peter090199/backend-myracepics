@@ -785,10 +785,9 @@ public function uploadx222(Request $request, $uuid)
         return response()->json([
             'success' => true,
             'count' => $images->count(),
-            'data' => $images
+            'images' => $images
         ], 200);
     }
-
 
 
 }
