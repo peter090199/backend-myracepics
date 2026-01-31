@@ -902,7 +902,7 @@ public function uploadx222(Request $request, $uuid)
         if ($images->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => "No images found for code: {$code} in this event.",
+                'message' => "No images found for this event.",
                 'images'  => []
             ], 201); // Note: 404 is technically more accurate, but staying with your 201
         }
