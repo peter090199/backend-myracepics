@@ -192,60 +192,24 @@ class UploadController extends Controller
         ]);
     }
 
-    // public function getImagesByEventById($evnt_id)
-    // {
-    //     $user = Auth::user();
-    //     if (!$user) {
-    //         return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
-    //     }
-
-    //     $images = ImagesUpload::where('evnt_id', $evnt_id)
-    //         ->where('code', $user->code)
-    //         ->orderBy('created_at', 'desc')
-    //         ->get();
-
-    //     $data = $images->map(function($img) use ($user, $evnt_id) {
-    //         // Build secure watermark URL for this image
-    //         $watermarkUrl = asset("storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}");
-
-    //         return [
-    //             'img_id'        => $img->img_id,
-    //             'img_name'      => $img->img_name,
-    //             'watermark_url' => $watermarkUrl,
-    //             'img_price'     => $img->img_price,
-    //             'img_qty'       => $img->img_qty,
-    //             'created_at'    => $img->created_at->toDateTimeString(),
-    //         ];
-    //     });
-
-    //     return response()->json([
-    //         'success'       => true,
-    //         'evnt_id'       => $evnt_id,
-    //         'total_images'  => $data->count(),
-    //         'images'        => $data,
-    //     ]);
-    // }
 
     //images by own photographer
-    public function getImagesByEventById($evnt_id)
+    public function getImagesByEventById(Request $request, $evnt_id)
     {
         $user = Auth::user();
-
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthenticated'
-            ], 401);
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
-        // 1. Fetch images
-        $images = ImagesUpload::where('evnt_id', $evnt_id)
+        // Use paginate instead of get
+        $perPage = 50;
+        $paginatedImages = ImagesUpload::where('evnt_id', $evnt_id)
             ->where('code', $user->code)
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate($perPage);
 
-        // 2. Map data (This returns an empty collection if $images is empty)
-        $data = $images->map(function ($img) use ($user, $evnt_id) {
+        // Transform the items within the paginator
+        $transformedData = collect($paginatedImages->items())->map(function ($img) use ($user, $evnt_id) {
             return [
                 'img_id'        => $img->img_id,
                 'img_name'      => $img->img_name,
@@ -262,18 +226,18 @@ class UploadController extends Controller
             ];
         });
 
-        // 3. Dynamic logic based on the collection count
-        $hasData = $data->isNotEmpty();
-        
-        return response()->json([
-            'success'      => $hasData,
-            'message'      => $hasData ? 'Images retrieved successfully' : 'No images found for this event',
-            'evnt_id'      => $evnt_id,
-            'total_images' => $data->count(), // Works perfectly on Collections
-            'images'       => $data,
-        ], $hasData ? 200 : 201);
-    }
+        $hasData = $transformedData->isNotEmpty();
 
+        return response()->json([
+            'success'       => $hasData,
+            'message'       => $hasData ? 'Images retrieved successfully' : 'No images found',
+            'evnt_id'       => $evnt_id,
+            'total_images'  => $paginatedImages->total(),
+            'current_page'  => $paginatedImages->currentPage(),
+            'last_page'     => $paginatedImages->lastPage(),
+            'images'        => $transformedData,
+        ], 200);
+    }
 
     public function getImagesByEvent($evnt_id)
     {

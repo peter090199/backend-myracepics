@@ -308,12 +308,6 @@
     //event images upload photographer
     Route::post('uploadimages', [UploadController::class, 'uploadBase64']);
 
-    //getimages for event by photographer
-    Route::get('getImagesByEventById/{evnt_id}', [UploadController::class, 'getImagesByEventById']);
-
-
-    Route::get('getImagesByEvent/{evnt_id}', [UploadController::class, 'getImagesByEvent']);
-    
     //remove watermark
     Route::get('/image/preview/{evnt_id}', [ImagePreviewController::class, 'preview'])
     ->name('image.preview')
@@ -322,6 +316,11 @@
     //getphotographer
     Route::get('getPhotographers', [UsersActive::class, 'getPhotographers']);
 
+    //getimages for event own photographer
+    Route::get('getImagesByEventById/{evnt_id}', [UploadController::class, 'getImagesByEventById']);
+
+    Route::get('getImagesByEvent/{evnt_id}', [UploadController::class, 'getImagesByEvent']);
+    
     //setFilterByPhotographer 
     Route::get('setFilterByPhotographer/{code}/{evnt_id}', [EventController::class, 'setFilterByPhotographer']); 
 
