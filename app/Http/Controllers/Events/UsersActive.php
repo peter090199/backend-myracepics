@@ -18,7 +18,6 @@ class UsersActive extends Controller
         $photographers = DB::table('users')
             ->select('fullname', 'role_code', 'recordstatus')
             ->where('role_code', 'LIKE', '%PHOTOGRAPHER%')
-            ->where('recordstatus', 'LIKE', '%active%')
             ->get();
 
         return response()->json([
