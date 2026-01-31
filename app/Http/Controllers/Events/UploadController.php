@@ -237,43 +237,40 @@ class UploadController extends Controller
             ], 401);
         }
 
-         $images = ImagesUpload::where('evnt_id', $evnt_id)
-        ->where('code', $user->code)
-        ->orderBy('created_at', 'desc')
-        ->get();
+        // 1. Fetch images
+        $images = ImagesUpload::where('evnt_id', $evnt_id)
+            ->where('code', $user->code)
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-        $hasData = $images->isNotEmpty();
-        $status  = $hasData ? 200 : 404; // Use 404 if not found, 200 if found
-        $message = $hasData ? 'Images retrieved successfully' : 'No images found for this event';
+        // 2. Map data (This returns an empty collection if $images is empty)
+        $data = $images->map(function ($img) use ($user, $evnt_id) {
+            return [
+                'img_id'        => $img->img_id,
+                'img_name'      => $img->img_name,
+                'watermark_url' => asset("storage/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}"),
+                'img_price'     => $img->img_price,
+                'img_qty'       => $img->img_qty,
+                'created_at'    => $img->created_at->toDateTimeString(),
+                'fullname'      => $img->fullname,
+                'preview_url'   => URL::temporarySignedRoute(
+                    'image.preview',
+                    now()->addMinutes(5),
+                    ['evnt_id' => $evnt_id]
+                ),
+            ];
+        });
 
-        // $watermarkUrl = asset(
-        //     "storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}"
-        // );
-
-       $data = $hasData ? $images->map(function ($img) use ($user, $evnt_id) {
-        return [
-            'img_id'        => $img->img_id,
-            'img_name'      => $img->img_name,
-            'watermark_url' => asset("storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}"),
-            'img_price'     => $img->img_price,
-            'img_qty'       => $img->img_qty,
-            'created_at'    => $img->created_at->toDateTimeString(),
-            'fullname'      => $img->fullname,
-            'preview_url'   => URL::temporarySignedRoute(
-                'image.preview',
-                now()->addMinutes(5), // Increased for better UX
-                ['evnt_id' => $evnt_id]
-                    ),
-                ];
-            }) : [];
-
+        // 3. Dynamic logic based on the collection count
+        $hasData = $data->isNotEmpty();
+        
         return response()->json([
             'success'      => $hasData,
-            'message'      => $message,
+            'message'      => $hasData ? 'Images retrieved successfully' : 'No images found for this event',
             'evnt_id'      => $evnt_id,
-            'total_images' => $data->count(),
+            'total_images' => $data->count(), // Works perfectly on Collections
             'images'       => $data,
-        ]);
+        ], $hasData ? 200 : 404);
     }
 
 
