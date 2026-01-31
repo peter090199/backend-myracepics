@@ -270,7 +270,7 @@ class UploadController extends Controller
             'evnt_id'      => $evnt_id,
             'total_images' => $data->count(), // Works perfectly on Collections
             'images'       => $data,
-        ], $hasData ? 200 : 404);
+        ], $hasData ? 200 : 201);
     }
 
 
