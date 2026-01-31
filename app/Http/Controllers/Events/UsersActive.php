@@ -16,13 +16,13 @@ class UsersActive extends Controller
     {
         // Define the first query
         $users = DB::table('users')
-            ->select('fullname', 'role_code', 'status')
+            ->select('fullname','code', 'role_code', 'status','code')
             ->where('role_code', 'DEF-PHOTOGRAPHER')
             ->where('recordstatus', 'active');
 
         // Union with the second query and get results
         $photographers = DB::table('resources')
-            ->select('fullname', 'role_code', 'status')
+            ->select('fullname','code', 'role_code', 'status')
             ->where('role_code', 'DEF-PHOTOGRAPHER')
             ->where('recordstatus', 'active')
             ->union($users)
