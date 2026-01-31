@@ -742,5 +742,45 @@ public function uploadx222(Request $request, $uuid)
         }
     }
 
+    
+    public function getImagesByCode($code)
+    {
+        $user = auth()->user();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+            
+        $code = $request->input('code');
+
+        if (!$code) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Code is required'
+            ], 400);
+        }
+
+
+        $images = DB::table('images_uploads')
+            ->where('code', $code)
+            ->get();
+
+        if ($images->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No images found for this code'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'count' => $images->count(),
+            'data' => $images
+        ], 200);
+    }
+
 
 }
