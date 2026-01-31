@@ -804,8 +804,72 @@ public function uploadx222(Request $request, $uuid)
     //     ], 200);
     // }
 
-    
-        public function getImagesByCode(Request $request, $code, $evnt_id)
+    public function getImagesByCode(Request $request, $code, $evnt_id)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
+        }
+
+        // Pagination parameters
+        $perPage = $request->query('per_page', 50); // default 50 images per page
+        $page = $request->query('page', 1);
+
+        // Check if code exists for this event
+        $codeExists = DB::table('images_uploads')
+            ->where('evnt_id', $evnt_id)
+            ->where('code', $code)
+            ->exists();
+
+        // Build query
+        $query = DB::table('images_uploads')
+            ->where('evnt_id', $evnt_id)
+            ->when($codeExists, fn($q) => $q->where('code', $code)) // filter by code if exists
+            ->when(!$codeExists, fn($q) => $q->where('recordstatus', 'Active')) // else all active images
+            ->select([
+                'id',
+                'event_image_id',
+                'role_code',
+                'code',
+                'evnt_id',
+                'evnt_name',
+                'fullname',
+                'watermark_path',
+                'img_id',
+                'img_name',
+                'img_qty',
+                'img_price',
+                'platform_fee',
+                'service_fee',
+                'created_at',
+                'recordstatus'
+            ])
+            ->orderBy('created_at', 'asc');
+
+        // Paginate results
+        $images = $query->paginate($perPage, ['*'], 'page', $page);
+
+        if ($images->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No images found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success'       => true,
+            'count'         => $images->total(),
+            'current_page'  => $images->currentPage(),
+            'last_page'     => $images->lastPage(),
+            'per_page'      => $images->perPage(),
+            'images'        => $images->items()
+        ], 200);
+    }
+
+        public function getImagesByCodexx1(Request $request, $code, $evnt_id)
         {
             // Check authentication
             $user = Auth::user();
