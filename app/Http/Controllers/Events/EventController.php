@@ -8,6 +8,8 @@ use App\Models\Event\Events;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
+use Illuminate\Support\Facades\DB;
+
 
 class EventController extends Controller
 {
@@ -743,8 +745,9 @@ public function uploadx222(Request $request, $uuid)
     }
 
     
-    public function getImagesByCode($code)
+    public function getImagesByCode(Request $request)
     {
+        // Get logged-in user
         $user = Auth::user();
         if (!$user) {
             return response()->json([
@@ -752,7 +755,8 @@ public function uploadx222(Request $request, $uuid)
                 'message' => 'Unauthenticated'
             ], 401);
         }
-            
+
+        // Get code from POST body
         $code = $request->input('code');
 
         if (!$code) {
@@ -762,7 +766,7 @@ public function uploadx222(Request $request, $uuid)
             ], 400);
         }
 
-
+        // Fetch images
         $images = DB::table('images_uploads')
             ->where('code', $code)
             ->get();
