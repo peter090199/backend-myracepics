@@ -16,7 +16,7 @@ class UsersActive extends Controller
     {
         // Define the first query
         $users = DB::table('users')
-            ->select('fullname','code', 'role_code', 'status','code')
+            ->select('fullname','code', 'role_code', 'status')
             ->where('role_code', 'DEF-PHOTOGRAPHER')
             ->where('recordstatus', 'active');
 
