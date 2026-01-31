@@ -365,11 +365,49 @@ class UploadController extends Controller
         ]);
     }
 
+    // public function getImagesByEventById($evnt_id)
+    // {
+    //     $user = Auth::user();
+    //     if (!$user) {
+    //         return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+    //     }
+
+    //     $images = ImagesUpload::where('evnt_id', $evnt_id)
+    //         ->where('code', $user->code)
+    //         ->orderBy('created_at', 'desc')
+    //         ->get();
+
+    //     $data = $images->map(function($img) use ($user, $evnt_id) {
+    //         // Build secure watermark URL for this image
+    //         $watermarkUrl = asset("storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}");
+
+    //         return [
+    //             'img_id'        => $img->img_id,
+    //             'img_name'      => $img->img_name,
+    //             'watermark_url' => $watermarkUrl,
+    //             'img_price'     => $img->img_price,
+    //             'img_qty'       => $img->img_qty,
+    //             'created_at'    => $img->created_at->toDateTimeString(),
+    //         ];
+    //     });
+
+    //     return response()->json([
+    //         'success'       => true,
+    //         'evnt_id'       => $evnt_id,
+    //         'total_images'  => $data->count(),
+    //         'images'        => $data,
+    //     ]);
+    // }
+
     public function getImagesByEventById($evnt_id)
     {
         $user = Auth::user();
+
         if (!$user) {
-            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthenticated'
+            ], 401);
         }
 
         $images = ImagesUpload::where('evnt_id', $evnt_id)
@@ -377,9 +415,12 @@ class UploadController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $data = $images->map(function($img) use ($user, $evnt_id) {
-            // Build secure watermark URL for this image
-            $watermarkUrl = asset("storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}");
+        $data = $images->map(function ($img) use ($user, $evnt_id) {
+
+            // ✅ Watermarked image (public)
+            $watermarkUrl = asset(
+                "storage/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}"
+            );
 
             return [
                 'img_id'        => $img->img_id,
@@ -388,17 +429,23 @@ class UploadController extends Controller
                 'img_price'     => $img->img_price,
                 'img_qty'       => $img->img_qty,
                 'created_at'    => $img->created_at->toDateTimeString(),
+
+                // ✅ SIGNED PREVIEW URL (hover only)
+                'preview_url' => URL::temporarySignedRoute(
+                    'image.preview',
+                    now()->addSeconds(3),
+                    ['evnt_id' => $evnt_id]
+                ),
             ];
         });
 
         return response()->json([
-            'success'       => true,
-            'evnt_id'       => $evnt_id,
-            'total_images'  => $data->count(),
-            'images'        => $data,
+            'success'      => true,
+            'evnt_id'      => $evnt_id,
+            'total_images' => $data->count(),
+            'images'       => $data,
         ]);
     }
-
 
     public function getImagesByEvent($evnt_id)
     {
@@ -433,6 +480,49 @@ class UploadController extends Controller
         ]);
     }
 
+     public function preview(Request $request, $evnt_id)
+    {
+        if (!$request->hasValidSignature()) {
+            abort(403);
+        }
+
+        $photo = Photo::where('event_id', $evnt_id)->firstOrFail();
+
+        $path = $photo->preview_path; // e.g. preview/event123/img1.jpg
+
+        if (!Storage::disk('local')->exists($path)) {
+            abort(404);
+        }
+
+        return response()->file(
+            storage_path('app/' . $path),
+            [
+                'Cache-Control' => 'no-store, no-cache, must-revalidate',
+                'Pragma' => 'no-cache',
+               // 'Content-Disposition' => 'inline; filename="preview.jpg"',
+            ]
+        );
+    }
+
+    public function previewxx(Request $request, $evnt_id)
+    {
+        $photo = EventImage::findOrFail($evnt_id);
+        // Optional: validate signed token
+        if (!$request->hasValidSignature()) {
+            abort(403);
+        }
+        $path = $photo->preview_path; // storage/preview/xxx.jpg
+        if (!Storage::disk('private')->exists($path)) {
+            abort(404);
+        }
+        return response()->file(
+            Storage::disk('private')->path($path),
+            [
+                'Cache-Control' => 'no-store, no-cache, must-revalidate',
+                'Pragma' => 'no-cache',
+            ]
+        );
+    }
 
 
     public function download($imageId)
@@ -455,6 +545,25 @@ class UploadController extends Controller
 
         // 3️⃣ Force download (no public URL)
         return response()->download($path);
+    }
+    public function getPreview($imagePath) 
+    {
+        // Find file
+        $path = storage_path('app/photos/' . $imagePath);
+        if (!file_exists($path)) abort(404);
+
+        // Process Watermark
+        $img = Image::make($path);
+        $img->text('MyRacePics', $img->width() / 2, $img->height() / 2, function($font) {
+            $font->file(public_path('fonts/Roboto-Bold.ttf'));
+            $font->size(48);
+            $font->color([255, 255, 255, 0.3]);
+            $font->align('center');
+            $font->valign('middle');
+        });
+
+        // Return response with 1-day cache
+        return $img->response('jpg', 90)->header('Cache-Control', 'public, max-age=86400');
     }
 
 }
