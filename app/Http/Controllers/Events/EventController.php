@@ -745,7 +745,7 @@ public function uploadx222(Request $request, $uuid)
     }
 
     //getImagesByCode
-     public function getImagesByCode(Request $request, $code)
+    function getImagesByCode(Request $request, $code)
     {
         // Check authentication
         $user = Auth::user();
