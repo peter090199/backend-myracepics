@@ -307,15 +307,13 @@
 
     //event images upload photographer
     Route::post('uploadimages', [UploadController::class, 'uploadBase64']);
-    Route::get('getImagesByEventById/{evnt_id}', [UploadController::class, 'getImagesByEventById'])
-    ->name('image.preview')
-    ->middleware(['signed', 'throttle:30,1']);;
+    Route::get('getImagesByEventById/{evnt_id}', [UploadController::class, 'getImagesByEventById']);
     Route::get('getImagesByEvent/{evnt_id}', [UploadController::class, 'getImagesByEvent']);
     
     //remove watermark
-    // Route::get('/image/preview/{evnt_id}', [ImagePreviewController::class, 'preview'])
-    // ->name('image.preview')
-    // ->middleware(['signed', 'throttle:30,1']);
+    Route::get('/image/preview/{evnt_id}', [ImagePreviewController::class, 'preview'])
+    ->name('image.preview')
+    ->middleware(['signed', 'throttle:30,1']);
 
 });
 

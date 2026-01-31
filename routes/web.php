@@ -621,8 +621,8 @@ Route::get('/test-broadcast', function () {
 
     //myracepics view
     // routes/web.php
-    Route::get('/image/preview/{evnt_id}', [UploadController::class, 'preview'])
-    ->name('image.preview')
-    ->middleware(['signed']);
+    // Route::get('/image/preview/{evnt_id}', [UploadController::class, 'preview'])
+    // ->name('image.preview')
+    // ->middleware(['signed']);
 
 });
