@@ -237,37 +237,39 @@ class UploadController extends Controller
             ], 401);
         }
 
-        $images = ImagesUpload::where('evnt_id', $evnt_id)
-            ->where('code', $user->code)
-            ->orderBy('created_at', 'desc')
-            ->get();
+         $images = ImagesUpload::where('evnt_id', $evnt_id)
+        ->where('code', $user->code)
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        $data = $images->map(function ($img) use ($user, $evnt_id) {
+        $hasData = $images->isNotEmpty();
+        $status  = $hasData ? 200 : 404; // Use 404 if not found, 200 if found
+        $message = $hasData ? 'Images retrieved successfully' : 'No images found for this event';
 
-            // ✅ Watermarked image (public)
-            $watermarkUrl = asset(
-                "storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}"
-            );
+        // $watermarkUrl = asset(
+        //     "storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}"
+        // );
 
-            return [
-                'img_id'        => $img->img_id,
-                'img_name'      => $img->img_name,
-                'watermark_url' => $watermarkUrl,
-                'img_price'     => $img->img_price,
-                'img_qty'       => $img->img_qty,
-                'created_at'    => $img->created_at->toDateTimeString(),
-                'fullname'      =>$img->fullname,
-                // ✅ SIGNED PREVIEW URL (hover only)
-                'preview_url' => URL::temporarySignedRoute(
-                    'image.preview',
-                    now()->addSeconds(3),
-                    ['evnt_id' => $evnt_id]
-                ),
-            ];
-        });
+       $data = $hasData ? $images->map(function ($img) use ($user, $evnt_id) {
+        return [
+            'img_id'        => $img->img_id,
+            'img_name'      => $img->img_name,
+            'watermark_url' => asset("storage/app/public/{$user->role_code}/{$user->code}/{$evnt_id}/watermark/{$img->img_name}"),
+            'img_price'     => $img->img_price,
+            'img_qty'       => $img->img_qty,
+            'created_at'    => $img->created_at->toDateTimeString(),
+            'fullname'      => $img->fullname,
+            'preview_url'   => URL::temporarySignedRoute(
+                'image.preview',
+                now()->addMinutes(5), // Increased for better UX
+                ['evnt_id' => $evnt_id]
+                    ),
+                ];
+            }) : [];
 
         return response()->json([
-            'success'      => true,
+            'success'      => $hasData,
+            'message'      => $message,
             'evnt_id'      => $evnt_id,
             'total_images' => $data->count(),
             'images'       => $data,
