@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Http\JsonResponse;
 
 class EventController extends Controller
 {
@@ -922,6 +922,8 @@ public function uploadx222(Request $request, $uuid)
             'images'        => $images->items()
         ], 200);
     }
+
+
     public function setFilterByPhotographer(Request $request, $code, $evnt_id)
     {
         $user = Auth::user();
