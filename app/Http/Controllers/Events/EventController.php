@@ -873,7 +873,7 @@ public function uploadx222(Request $request, $uuid)
     //filter by photographer
     public function setFilterByPhotographerEvent(Request $request): JsonResponse
     {
-        // 1. Authentication Check
+        // 1. Auth Check (401 is more appropriate for missing login)
         if (!Auth::check()) {
             return response()->json([
                 'success' => false,
@@ -881,21 +881,20 @@ public function uploadx222(Request $request, $uuid)
             ], 401);
         }
 
-        // 2. Get Data from Request Body
-        // Use $request->input() to get body data
-        $code    = $request->input('code');
-        $evnt_id = $request->input('evnt_id');
-        $perPage = $request->input('per_page', 10);
+        // 2. Get Data from Query String (?code=...&evnt_id=...)
+        $code    = $request->query('code');
+        $evnt_id = $request->query('evnt_id');
+        $perPage = $request->query('per_page', 10);
 
-        // Validation: Ensure evnt_id is provided
+        // 3. Validation
         if (!$evnt_id) {
             return response()->json([
                 'success' => false,
-                'message' => 'The evnt_id field is required.'
+                'message' => 'The evnt_id parameter is required.'
             ], 422);
         }
 
-        // 3. Build Query
+        // 4. Build Query
         $query = DB::table('images_uploads')
             ->select([
                 'id', 'event_image_id', 'role_code', 'code', 'evnt_id',
@@ -906,22 +905,14 @@ public function uploadx222(Request $request, $uuid)
             ->where('evnt_id', $evnt_id)
             ->where('recordstatus', 'Active');
 
-        // 4. Handle 'all' logic
+        // Filter by code if provided and not 'all'
         if ($code && strtolower($code) !== 'all') {
             $query->where('code', $code);
         }
 
         $images = $query->orderBy('created_at', 'asc')->paginate($perPage);
 
-        // 5. Response
-        if ($images->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => "No images found.",
-                'images'  => []
-            ], 200);
-        }
-
+        // 5. Success Response
         return response()->json([
             'success'      => true,
             'count'         => $images->total(),
@@ -931,7 +922,6 @@ public function uploadx222(Request $request, $uuid)
             'images'        => $images->items()
         ], 200);
     }
-
     public function setFilterByPhotographer(Request $request, $code, $evnt_id)
     {
         $user = Auth::user();
