@@ -13,14 +13,12 @@ class AddtoCart extends Controller
    public function addToCart(Request $request)
     {
         $user = Auth::user();
-
         if (!$user) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated'
             ], 401);
         }
-
         // 1. Validation
         $validated = $request->validate([
             'img_id'        => 'required',
@@ -38,7 +36,6 @@ class AddtoCart extends Controller
                             ->where('img_id', $request->img_id)
                             ->where('evnt_id', $request->evnt_id)
                             ->exists();
-
         if ($exists) {
             return response()->json([
                 'success' => false, 
