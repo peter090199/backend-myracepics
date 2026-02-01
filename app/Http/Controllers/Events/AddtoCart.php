@@ -118,7 +118,7 @@ class AddtoCart extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Item removed from basket',
+                'message' => 'Item removed',
                 'cart_count' => $remainingItems->count(),
                 'total_amount' => $remainingItems->sum('img_price')
             ], 200);
@@ -145,7 +145,7 @@ class AddtoCart extends Controller
         if ($deleted) {
             return response()->json([
                 'success' => true, 
-                'message' => 'Removed from basket',
+                'message' => 'Image Removed!',
                 'cart_count' => ImageCart::where('code', $user->code)->count()
             ], 200);
         }
