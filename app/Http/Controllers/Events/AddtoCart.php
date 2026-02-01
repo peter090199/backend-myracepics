@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Events;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Event\ImageCart;
-
+use Illuminate\Support\Facades\Auth;
 
 class AddtoCart extends Controller
 {
