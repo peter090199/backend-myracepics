@@ -871,20 +871,31 @@ public function uploadx222(Request $request, $uuid)
 
 
     //filter by photographer
-    public function setFilterByPhotographer(Request $request, $code, $evnt_id)
+    public function setFilterByPhotographer(Request $request): JsonResponse
     {
-        $user = Auth::user();
-        if (!$user) {
+        // 1. Authentication Check
+        if (!Auth::check()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthenticated'
             ], 401);
         }
 
-        // 1. Setup Pagination
-        $perPage = $request->query('per_page', 10);
+        // 2. Get Data from Request Body
+        // Use $request->input() to get body data
+        $code    = $request->input('code');
+        $evnt_id = $request->input('evnt_id');
+        $perPage = $request->input('per_page', 10);
 
-        // 2. Build Query
+        // Validation: Ensure evnt_id is provided
+        if (!$evnt_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The evnt_id field is required.'
+            ], 422);
+        }
+
+        // 3. Build Query
         $query = DB::table('images_uploads')
             ->select([
                 'id', 'event_image_id', 'role_code', 'code', 'evnt_id',
@@ -895,23 +906,22 @@ public function uploadx222(Request $request, $uuid)
             ->where('evnt_id', $evnt_id)
             ->where('recordstatus', 'Active');
 
-        // --- ADDED LOGIC: Only filter by code if it's NOT 'all' ---
-        if (strtolower($code) !== 'all') {
+        // 4. Handle 'all' logic
+        if ($code && strtolower($code) !== 'all') {
             $query->where('code', $code);
         }
 
         $images = $query->orderBy('created_at', 'asc')->paginate($perPage);
 
-        // 3. Condition if no data found
+        // 5. Response
         if ($images->isEmpty()) {
             return response()->json([
                 'success' => false,
                 'message' => "No images found.",
                 'images'  => []
-            ], 201); 
+            ], 200);
         }
 
-        // 4. Success Response
         return response()->json([
             'success'      => true,
             'count'         => $images->total(),
@@ -921,7 +931,6 @@ public function uploadx222(Request $request, $uuid)
             'images'        => $images->items()
         ], 200);
     }
-
 
     // public function setFilterByPhotographer(Request $request, $code, $evnt_id)
     // {
