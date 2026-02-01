@@ -93,7 +93,44 @@ class AddtoCart extends Controller
         ], 200);
     }
 
+    // AddtoCart.php (Controller)
+
     public function removeFromCart(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $img_id = $request->input('img_id');
+
+        // Find the item belonging to this user
+        $cartItem = ImageCart::where('code', $user->code)
+                            ->where('img_id', $img_id)
+                            ->first();
+
+        if ($cartItem) {
+            $cartItem->delete();
+
+            // Get updated count and total for the response
+            $remainingItems = ImageCart::where('code', $user->code)->get();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item removed from basket',
+                'cart_count' => $remainingItems->count(),
+                'total_amount' => $remainingItems->sum('img_price')
+            ], 200);
+        }
+
+        return response()->json([
+            'success' => false, 
+            'message' => 'Item not found in basket'
+        ], 404);
+    }
+
+    public function removeFromCartxx(Request $request)
     {
         $user = Auth::user();
         if (!$user) {
