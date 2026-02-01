@@ -882,7 +882,7 @@ public function uploadx222(Request $request, $uuid)
         }
 
         // 1. Setup Pagination
-        $perPage = $request->query('per_page', 50);
+        $perPage = $request->query('per_page', 10);
 
         // 2. Build Query - Strict filtering by both event and code
         $images = DB::table('images_uploads')
