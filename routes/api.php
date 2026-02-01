@@ -327,6 +327,8 @@
     //setFilterByPhotographer 
     Route::get('setFilterByPhotographer/{code}/{evnt_id}', [EventController::class, 'setFilterByPhotographer']); 
 
+    Route::get('setFilterByPhotographerEvent', [EventController::class, 'setFilterByPhotographerEvent']); 
+
     Route::get('images/{code}', [EventController::class, 'getImagesByCode']);
     //add to cart
     Route::post('cart/addToCart', [AddtoCart::class, 'addToCart']);
