@@ -329,7 +329,7 @@
 
     Route::get('images/{code}', [EventController::class, 'getImagesByCode']);
     //add to cart
-    Route::post('addToCart', [AddtoCart::class, 'addToCart']);
+    Route::post('cart/addToCart', [AddtoCart::class, 'addToCart']);
     Route::delete('cart/remove', [AddtoCart::class, 'removeFromCart']);
 
 
