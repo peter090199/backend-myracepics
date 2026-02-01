@@ -94,8 +94,9 @@ class AddtoCart extends Controller
     }
 
     // AddtoCart.php (Controller)
+// Route: Route::delete('cart/remove/{img_id}', [AddtoCart::class, 'removeFromCart']);
 
-    public function removeFromCart(Request $request)
+    public function removeFromCart($img_id) // Capture img_id from URL
     {
         $user = Auth::user();
 
@@ -103,9 +104,7 @@ class AddtoCart extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
-        $img_id = $request->input('img_id');
-
-        // Find the item belonging to this user
+        // Use the $img_id passed from the URL parameter
         $cartItem = ImageCart::where('code', $user->code)
                             ->where('img_id', $img_id)
                             ->first();
@@ -113,12 +112,12 @@ class AddtoCart extends Controller
         if ($cartItem) {
             $cartItem->delete();
 
-            // Get updated count and total for the response
+            // Recalculate for immediate UI update
             $remainingItems = ImageCart::where('code', $user->code)->get();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Item removed',
+                'message' => 'Item removed from basket',
                 'cart_count' => $remainingItems->count(),
                 'total_amount' => $remainingItems->sum('img_price')
             ], 200);
@@ -126,7 +125,7 @@ class AddtoCart extends Controller
 
         return response()->json([
             'success' => false, 
-            'message' => 'Item not found in basket'
+            'message' => 'Item not found'
         ], 404);
     }
 
