@@ -923,7 +923,6 @@ public function uploadx222(Request $request, $uuid)
         ], 200);
     }
 
-
     public function setFilterByPhotographer(Request $request, $code, $evnt_id)
     {
         $user = Auth::user();
@@ -934,11 +933,11 @@ public function uploadx222(Request $request, $uuid)
             ], 401);
         }
 
-        // 1. Setup Pagination
+        // Pagination
         $perPage = $request->query('per_page', 10);
 
-        // 2. Build Query - Strict filtering by both event and code
-        $images = DB::table('images_uploads')
+        // Base query (event + active only)
+        $query = DB::table('images_uploads')
             ->select([
                 'id', 'event_image_id', 'role_code', 'code', 'evnt_id',
                 'evnt_name', 'fullname', 'watermark_path', 'img_id',
@@ -946,23 +945,31 @@ public function uploadx222(Request $request, $uuid)
                 'service_fee', 'created_at', 'recordstatus'
             ])
             ->where('evnt_id', $evnt_id)
-            ->where('code', $code) // Strict match
-            ->where('recordstatus', 'Active') // Usually, you only want active images
+            ->where('recordstatus', 'Active');
+
+        // 🔥 Apply photographer filter ONLY if not "All"
+        if ($code !== 'All') {
+            $query->where('code', $code);
+        }
+
+        // Pagination
+        $images = $query
             ->orderBy('created_at', 'asc')
             ->paginate($perPage);
 
-        // 3. Condition if no data found
+        // No data
         if ($images->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => "No images found for this event.",
+                'message' => 'No images found for this event.',
                 'images'  => []
-            ], 201); // Note: 404 is technically more accurate, but staying with your 201
+            ], 200);
         }
 
-        // 4. Success Response
+        // Success
         return response()->json([
-            'success'      => true,
+            'success'       => true,
+            'filter'        => $code === 'All' ? 'All Photographers' : $code,
             'count'         => $images->total(),
             'current_page'  => $images->currentPage(),
             'last_page'     => $images->lastPage(),
@@ -970,6 +977,53 @@ public function uploadx222(Request $request, $uuid)
             'images'        => $images->items()
         ], 200);
     }
+
+    // public function setFilterByPhotographer(Request $request, $code, $evnt_id)
+    // {
+    //     $user = Auth::user();
+    //     if (!$user) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Unauthenticated'
+    //         ], 401);
+    //     }
+
+    //     // 1. Setup Pagination
+    //     $perPage = $request->query('per_page', 10);
+
+    //     // 2. Build Query - Strict filtering by both event and code
+    //     $images = DB::table('images_uploads')
+    //         ->select([
+    //             'id', 'event_image_id', 'role_code', 'code', 'evnt_id',
+    //             'evnt_name', 'fullname', 'watermark_path', 'img_id',
+    //             'img_name', 'img_qty', 'img_price', 'platform_fee',
+    //             'service_fee', 'created_at', 'recordstatus'
+    //         ])
+    //         ->where('evnt_id', $evnt_id)
+    //         ->where('code', $code) // Strict match
+    //         ->where('recordstatus', 'Active') // Usually, you only want active images
+    //         ->orderBy('created_at', 'asc')
+    //         ->paginate($perPage);
+
+    //     // 3. Condition if no data found
+    //     if ($images->isEmpty()) {
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => "No images found for this event.",
+    //             'images'  => []
+    //         ], 201); // Note: 404 is technically more accurate, but staying with your 201
+    //     }
+
+    //     // 4. Success Response
+    //     return response()->json([
+    //         'success'      => true,
+    //         'count'         => $images->total(),
+    //         'current_page'  => $images->currentPage(),
+    //         'last_page'     => $images->lastPage(),
+    //         'per_page'      => $images->perPage(),
+    //         'images'        => $images->items()
+    //     ], 200);
+    // }
 
 
 }
