@@ -43,6 +43,9 @@
     use App\Http\Controllers\Auth\GoogleAuthController;
     use App\Http\Controllers\Events\UploadController;
     use App\Http\Controllers\Events\UsersActive;
+    use App\Http\Controllers\Events\AddtoCart;
+
+
     /*
     |--------------------------------------------------------------------------
     | API Routes
@@ -325,8 +328,8 @@
     Route::get('setFilterByPhotographer/{code}/{evnt_id}', [EventController::class, 'setFilterByPhotographer']); 
 
     Route::get('images/{code}', [EventController::class, 'getImagesByCode']);
-
-
+    //add to cart
+    Route::post('addToCart', [AddtoCart::class, 'addToCart']);
 
 
 
