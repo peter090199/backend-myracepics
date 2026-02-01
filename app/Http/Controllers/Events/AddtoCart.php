@@ -71,6 +71,27 @@ class AddtoCart extends Controller
         ], 200);
     }
 
+    public function getCartList()
+    {
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        // Retrieve all items in the user's basket
+        $cartItems = ImageCart::where('code', $user->code)
+                            ->orderBy('created_at', 'desc')
+                            ->get();
+
+        return response()->json([
+            'success' => true,
+            'count'   => $cartItems->count(),
+            'data'    => $cartItems,
+            // Calculate total price directly on the backend for accuracy
+            'total_amount' => $cartItems->sum('img_price') 
+        ], 200);
+    }
 
     public function removeFromCart(Request $request)
     {
