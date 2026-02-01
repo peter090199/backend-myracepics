@@ -72,6 +72,29 @@ class AddtoCart extends Controller
     }
 
 
+    public function removeFromCart(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $deleted = ImageCart::where('code', $user->code)
+                            ->where('img_id', $request->img_id)
+                            ->where('evnt_id', $request->evnt_id)
+                            ->delete();
+
+        if ($deleted) {
+            return response()->json([
+                'success' => true, 
+                'message' => 'Removed from basket',
+                'cart_count' => ImageCart::where('code', $user->code)->count()
+            ], 200);
+        }
+
+        return response()->json(['success' => false, 'message' => 'Item not found'], 404);
+    }
+
     public function addtoCartxx(Request $request)
     {
         
