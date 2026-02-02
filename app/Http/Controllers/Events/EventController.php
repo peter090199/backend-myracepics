@@ -13,8 +13,64 @@ use Illuminate\Http\JsonResponse;
 
 class EventController extends Controller
 {
-    
     public function save(Request $request)
+    {
+        $validated = $request->validate([
+            'title'    => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'date'     => 'required|date',
+            'category' => 'required|string|max:100',
+            'image'    => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+
+        $code = $user->code;           // ex: Photographer
+        $roleCode = $user->role_code;  // ex: PH
+
+        $imagePath = null;
+
+        if (!empty($validated['image'])) {
+
+            // Remove base64 header
+            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
+            $imageData = str_replace(' ', '+', $imageData);
+
+            $fileName = 'event-' . time() . '.png';
+
+            // Folder structure in S3
+            $relativePath = $roleCode . '/' . $code . '/' . $fileName;
+
+            // Upload to S3
+            Storage::disk('s3')->put(
+                $relativePath,
+                base64_decode($imageData),
+                'public'
+            );
+
+            // Get public S3 URL
+            $imagePath = Storage::disk('s3')->url($relativePath);
+        }
+
+        $event = Events::create([
+            'title'     => $validated['title'],
+            'location'  => $validated['location'],
+            'date'      => $validated['date'],
+            'category'  => $validated['category'],
+            'code'      => $code,
+            'role_code' => $roleCode,
+            'image'     => json_encode($imagePath ? [$imagePath] : []),
+            'user_id'   => $user->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Event saved successfully',
+            'event'   => $event
+        ]);
+    }
+    
+    public function savexx(Request $request)
     {
         $validated = $request->validate([
             'title'    => 'required|string|max:255',
