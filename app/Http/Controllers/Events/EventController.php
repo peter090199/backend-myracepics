@@ -47,7 +47,6 @@ class EventController extends Controller
                 base64_decode($imageData),
                 'public'
             );
-
             // Get public S3 URL
             $imagePath = Storage::disk('s3')->url($relativePath);
         }
