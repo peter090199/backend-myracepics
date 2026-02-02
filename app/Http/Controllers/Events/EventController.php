@@ -14,7 +14,8 @@ use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
-    public function save(Request $request)
+    
+   public function save(Request $request)
     {
         $validated = $request->validate([
             'title'    => 'required|string|max:255',
@@ -48,9 +49,14 @@ class EventController extends Controller
                 base64_decode($imageData),
                 'public'
             );
+
             // Get public S3 URL
             $imagePath = Storage::disk('s3')->url($relativePath);
         }
+
+        // ✅ Generate a unique event ID
+        $eventId = 'EVNT-' . strtoupper(Str::random(10));
+
         $event = Events::create([
             'title'     => $validated['title'],
             'location'  => $validated['location'],
@@ -59,7 +65,8 @@ class EventController extends Controller
             'code'      => $code,
             'role_code' => $roleCode,
             'image'     => json_encode($imagePath ? [$imagePath] : []),
-            'evnt_id'   => $user->id,
+            'evnt_id'   => $eventId,   // Fixed: unique event ID
+            'user_id'   => $user->id,
         ]);
 
         return response()->json([
