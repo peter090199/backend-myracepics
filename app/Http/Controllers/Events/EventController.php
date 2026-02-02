@@ -51,7 +51,6 @@ class EventController extends Controller
             // Get public S3 URL
             $imagePath = Storage::disk('s3')->url($relativePath);
         }
-
         $event = Events::create([
             'title'     => $validated['title'],
             'location'  => $validated['location'],
