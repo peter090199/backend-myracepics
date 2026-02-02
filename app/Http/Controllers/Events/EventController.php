@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
@@ -59,7 +60,7 @@ class EventController extends Controller
             'code'      => $code,
             'role_code' => $roleCode,
             'image'     => json_encode($imagePath ? [$imagePath] : []),
-            'user_id'   => $user->id,
+            'evnt_id'   => $user->id,
         ]);
 
         return response()->json([
