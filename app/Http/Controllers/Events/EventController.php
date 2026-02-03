@@ -71,7 +71,6 @@ class EventController extends Controller
             'evnt_id'   => $eventId,
             'user_id'   => $user->id,
         ]);
-
         return response()->json([
             'success' => true,
             'message' => 'Event saved successfully',
