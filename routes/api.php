@@ -297,7 +297,7 @@
 
     //EVENTS ->AWS
     Route::post('saveEvents', [S3UploadController::class, 'save']);
-
+        
 
     //Route::post('events/save', [EventController::class, 'save']);
     Route::delete('events/delete/{id}', [EventController::class, 'delete']);
