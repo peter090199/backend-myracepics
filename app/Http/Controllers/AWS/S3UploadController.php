@@ -49,7 +49,7 @@ class S3UploadController extends Controller
 
 
     //save event
-     public function save(Request $request)
+  public function save(Request $request)
     {
         // 1. Validation: 'image' is now a file validation
         $validated = $request->validate([
