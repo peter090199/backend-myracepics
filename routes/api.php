@@ -44,7 +44,7 @@
     use App\Http\Controllers\Events\UploadController;
     use App\Http\Controllers\Events\UsersActive;
     use App\Http\Controllers\Events\AddtoCart;
-
+    use App\Http\Controllers\AWS\S3UploadController;
 
     /*
     |--------------------------------------------------------------------------
@@ -295,8 +295,11 @@
     Route::get('photos/list', [PhotoUploadController::class, 'list']);
     Route::post('photos/delete', [PhotoUploadController::class, 'delete']);
 
-    //EVENTS
-    Route::post('events/save', [EventController::class, 'save']);
+    //EVENTS ->AWS
+    Route::post('events/save', [S3UploadController::class, 'save']);
+
+
+    //Route::post('events/save', [EventController::class, 'save']);
     Route::delete('events/delete/{id}', [EventController::class, 'delete']);
     Route::put('events/update/{id}', [EventController::class, 'update']);
     Route::get('events/getevents', [EventController::class, 'getEvents']);

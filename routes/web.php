@@ -8,6 +8,9 @@ use  App\Events\MessageSent;
 use  App\Http\Controllers\Auth\GoogleAuthController;
 use Intervention\Image\ImageManager;
 use App\Http\Controllers\Events\UploadController;
+use App\Http\Controllers\AWS\S3UploadController;
+use Aws\S3\S3Client;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -561,6 +564,37 @@ Route::get('/diagonalwatermarkslide22', function () {
     ]);
 });
 
+Route::get('/s3-test', function () {
+    try {
+        $bucket = env('AWS_BUCKET');
+
+        $client = new S3Client([
+            'version' => 'latest',
+            'region'  => env('AWS_DEFAULT_REGION'),
+            'credentials' => [
+                'key'    => env('AWS_ACCESS_KEY_ID'),
+                'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            ],
+        ]);
+
+        // Check if the bucket exists / accessible
+        $client->headBucket(['Bucket' => $bucket]);
+
+        return [
+            'success' => true,
+            'message' => "AWS S3 connection to bucket '$bucket' works!",
+        ];
+    } catch (\Exception $e) {
+        return [
+            'success' => false,
+            'message' => "AWS S3 connection to bucket failed!",
+            'error' => $e->getMessage(),
+        ];
+    }
+});
+
+Route::get('/upload', [S3UploadController::class, 'showForm']);
+Route::post('/upload', [S3UploadController::class, 'uploadImage'])->name('upload.image');
 
 
 Route::get("auth/google",[GoogleAuthController::class,"redirectToGoogle"])->name("redirect.google");

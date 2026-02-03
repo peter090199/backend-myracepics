@@ -1,61 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Hover Preview Watermark</title>
-    <style>
-        .image-preview-container {
-            position: relative;
-            display: inline-block;
-            margin: 20px;
-        }
-
-        .thumbnail {
-            width: 200px; /* thumbnail size */
-            cursor: pointer;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        /* Full preview */
-        .preview {
-            position: absolute;
-            top: 0;
-            left: 220px; /* show right of thumbnail */
-            width: auto;
-            max-width: 400px;
-            max-height: 400px;
-            display: none;
-            border: 2px solid #333;
-            border-radius: 6px;
-            background: #fff;
-            z-index: 10;
-        }
-
-        /* Show preview on hover */
-        .image-preview-container:hover .preview {
-            display: block;
-        }
-    </style>
+    <title>Upload Image to S3</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
 <body>
-    <!-- <h1>Hover to preview watermarked image</h1>
+<div class="container mt-5">
+    <h2>Upload Image to AWS S3</h2>
 
-    <div class="image-preview-container">
-        {{-- Original thumbnail --}}
-        <img src="{{ asset('storage/app/public/profile.jpg') }}" alt="Original" class="thumbnail">
+    @if(session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }} <br>
+            <a href="{{ session('url') }}" target="_blank">View Image</a>
+        </div>
+    @endif
 
-        {{-- Watermarked preview --}}
-        <img src="{{ asset('storage/app/public/diagonal-watermarked.jpg') }}" alt="Watermarked" class="preview">
-    </div> -->
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
-    <h1>Hover to preview watermarked image</h1>
-
-<div class="image-preview-container">
-    <img src="{{ asset('storage/app/public/PROFILE.jpg') }}" alt="Original" class="thumbnail">
-
-    <img src="{{ asset('storage/diagonal-watermarked.jpg') }}" alt="Watermarked" class="preview">
+    <form action="{{ route('upload.image') }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        <div class="mb-3">
+            <label for="image" class="form-label">Select Image</label>
+            <input type="file" name="image" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
 </div>
-
 </body>
 </html>

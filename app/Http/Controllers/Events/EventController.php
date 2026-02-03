@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 class EventController extends Controller
 {
 
-   public function save(Request $request)
+    public function save(Request $request)
     {
         // 1. Validation
         $validated = $request->validate([
@@ -23,58 +23,76 @@ class EventController extends Controller
             'location' => 'required|string|max:255',
             'date'     => 'required|date',
             'category' => 'required|string|max:100',
-            'image'    => 'nullable|string', // Expecting Base64
+            'image'    => 'nullable|string', // Expecting Base64 string
         ]);
 
         $user = Auth::user();
-        $code = $user->code;         // Photographer Code
-        $roleCode = $user->role_code;  // Role Prefix (e.g., PH)
+        $code = $user->code;         
+        $roleCode = $user->role_code;  
         $imagePath = null;
 
-        // 2. Handle S3 Upload
+        // 2. Handle S3 Upload with Error Catching
         if (!empty($validated['image'])) {
-            // Remove base64 header (data:image/png;base64,...)
-            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
-            $imageData = str_replace(' ', '+', $imageData);
+            try {
+                // Remove base64 header
+                $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
+                $imageData = str_replace(' ', '+', $imageData);
 
-            // Create unique filename to prevent overwriting
-            $fileName = 'event-' . time() . '-' . Str::random(5) . '.png';
-            $relativePath = "{$roleCode}/{$code}/events/{$fileName}";
+                // Create clean filename: title-timestamp-random.png
+                $fileName = 'event-' . time() . '.png';
+                $relativePath = "{$roleCode}/{$code}/events/{$fileName}";
 
-            // Upload to AWS S3
-            Storage::disk('s3')->put($relativePath, base64_decode($imageData), [
-                'visibility'  => 'public',
-                'ContentType' => 'image/png',
-            ]);
+                // Attempt upload to AWS S3
+                $uploaded = Storage::disk('s3')->put($relativePath, base64_decode($imageData), [
+                    'visibility'  => 'public',
+                    'ContentType' => 'image/png',
+                ]);
 
-            $imagePath = Storage::disk('s3')->url($relativePath);
+                if ($uploaded) {
+                    $imagePath = Storage::disk('s3')->url($relativePath);
+                }
+            } catch (Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'AWS S3 Upload Failed: ' . $e->getMessage()
+                ], 500);
+            }
         }
 
-        // 3. Generate a Unique Random Event ID
-        // This loop ensures the ID doesn't already exist in your database
+        // 3. Generate a Unique Random Event ID (Fixes Str::evnt_id error)
         do {
-            $uniqueId = strtoupper(Str::random(10)); // Generates 10 random chars
-            $eventId = 'EVENT-' . $uniqueId;
+            $uniqueId = strtoupper(Str::random(10)); 
+            $eventId = '    -' . $uniqueId;
         } while (Events::where('evnt_id', $eventId)->exists());
 
         // 4. Save to Database
-        $event = Events::create([
-            'title'     => $validated['title'],
-            'location'  => $validated['location'],
-            'date'      => $validated['date'],
-            'category'  => $validated['category'],
-            'code'      => $code,
-            'role_code' => $roleCode,
-            'image'     => json_encode($imagePath ? [$imagePath] : []),
-            'evnt_id'   => $eventId, // The random ID generated above
-        ]);
+        try {
+            $event = Events::create([
+                'title'     => $validated['title'],
+                'location'  => $validated['location'],
+                'date'      => $validated['date'],
+                'category'  => $validated['category'],
+                'code'      => $code,
+                'role_code' => $roleCode,
+                'image'     => json_encode($imagePath ? [$imagePath] : []),
+                'evnt_id'   => $eventId, 
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Event saved successfully',
-            'event'   => $event
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Event saved successfully',
+                'event'   => $event
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Database Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
+
+
    public function savexxx(Request $request)
     {
         $validated = $request->validate([
@@ -94,7 +112,7 @@ class EventController extends Controller
 
         if (!empty($validated['image'])) {
 
-            // Remove base64 header
+            // Remove base64 header 
             $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
             $imageData = str_replace(' ', '+', $imageData);
 
