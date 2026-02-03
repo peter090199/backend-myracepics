@@ -17,48 +17,45 @@ class EventController extends Controller
 
     public function save(Request $request)
     {
+        // 1. Validation
         $validated = $request->validate([
             'title'    => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'date'     => 'required|date',
             'category' => 'required|string|max:100',
-            'image'    => 'nullable|string',
+            'image'    => 'nullable|string', // Base64 string
         ]);
 
         $user = Auth::user();
-
-        $code     = $user->code;        // Photographer
-        $roleCode = $user->role_code;   // PH
-
+        $code = $user->code;
+        $roleCode = $user->role_code;
         $imagePath = null;
 
+        // 2. Handle Base64 Image Upload to S3
         if (!empty($validated['image'])) {
-
-            // Remove base64 header
+            // Clean base64 data
             $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
             $imageData = str_replace(' ', '+', $imageData);
-
-            $fileName = 'event-' . time() . '.png';
-
-            // ✅ CORRECT S3 PATH
+            
+            $fileName = 'event-' . time() . '-' . Str::random(5) . '.png';
             $relativePath = "{$roleCode}/{$code}/events/{$fileName}";
 
             // Upload to S3
-            Storage::disk('s3')->put(
-                $relativePath,
-                base64_decode($imageData),
-                [
-                    'visibility'  => 'public',
-                    'ContentType' => 'image/png',
-                ]
-            );
+            Storage::disk('s3')->put($relativePath, base64_decode($imageData), [
+                'visibility'  => 'public',
+                'ContentType' => 'image/png',
+            ]);
 
-            // ✅ CORRECT PUBLIC S3 URL
             $imagePath = Storage::disk('s3')->url($relativePath);
         }
 
-        // Unique Event ID
-         $eventId = 'EVENT-' . strtoupper(Str::random(10));
+        // 3. Generate Unique Random Event ID
+        // We use a loop to ensure the random ID doesn't already exist in the DB
+        do {
+            $eventId = 'EVT-' . strtoupper(Str::random(8));
+        } while (Events::where('evnt_id', $eventId)->exists());
+
+        // 4. Create Event Record
         $event = Events::create([
             'title'     => $validated['title'],
             'location'  => $validated['location'],
@@ -66,16 +63,16 @@ class EventController extends Controller
             'category'  => $validated['category'],
             'code'      => $code,
             'role_code' => $roleCode,
-            'image'     => json_encode($imagePath ? [$imagePath] : []),
+            'image'     => json_encode($imagePath ? [$imagePath] : []), // Stored as JSON array
             'evnt_id'   => $eventId,
         ]);
+
         return response()->json([
             'success' => true,
             'message' => 'Event saved successfully',
             'event'   => $event
         ]);
     }
-
    public function savexxx(Request $request)
     {
         $validated = $request->validate([
