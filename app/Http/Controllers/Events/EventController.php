@@ -14,8 +14,72 @@ use Illuminate\Support\Str;
 
 class EventController extends Controller
 {
-    
-   public function save(Request $request)
+
+    public function save(Request $request)
+    {
+        $validated = $request->validate([
+            'title'    => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'date'     => 'required|date',
+            'category' => 'required|string|max:100',
+            'image'    => 'nullable|string',
+        ]);
+
+        $user = Auth::user();
+
+        $code     = $user->code;        // Photographer
+        $roleCode = $user->role_code;   // PH
+
+        $imagePath = null;
+
+        if (!empty($validated['image'])) {
+
+            // Remove base64 header
+            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
+            $imageData = str_replace(' ', '+', $imageData);
+
+            $fileName = 'event-' . time() . '.png';
+
+            // ✅ CORRECT S3 PATH
+            $relativePath = "{$roleCode}/{$code}/events/{$fileName}";
+
+            // Upload to S3
+            Storage::disk('s3')->put(
+                $relativePath,
+                base64_decode($imageData),
+                [
+                    'visibility'  => 'public',
+                    'ContentType' => 'image/png',
+                ]
+            );
+
+            // ✅ CORRECT PUBLIC S3 URL
+            $imagePath = Storage::disk('s3')->url($relativePath);
+        }
+
+        // Unique Event ID
+        $eventId = 'EVNT-' . strtoupper(Str::random(10));
+
+        $event = Events::create([
+            'title'     => $validated['title'],
+            'location'  => $validated['location'],
+            'date'      => $validated['date'],
+            'category'  => $validated['category'],
+            'code'      => $code,
+            'role_code' => $roleCode,
+            'image'     => json_encode($imagePath ? [$imagePath] : []),
+            'evnt_id'   => $eventId,
+            'user_id'   => $user->id,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Event saved successfully',
+            'event'   => $event
+        ]);
+    }
+
+   public function savexxx(Request $request)
     {
         $validated = $request->validate([
             'title'    => 'required|string|max:255',
