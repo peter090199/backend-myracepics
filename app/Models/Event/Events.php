@@ -29,14 +29,12 @@ class Events extends Model
     /**
      * Boot method to auto-generate UUID on creating event
      */
-    protected static function boot()
+    protected static function booted()
     {
-        parent::boot();
-
-        static::creating(function ($model) {
-            if (empty($model->evnt_id)) {
-                $model->evnt_id = (string) Str::evnt_id();
-            }
-        });
-    }
+        static::creating(function ($event) {
+        if (empty($event->evnt_id)) {
+            $event->evnt_id = 'EVNT-' . strtoupper(Str::random(10));
+        }
+      });
+   }
 }
