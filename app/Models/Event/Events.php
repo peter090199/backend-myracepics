@@ -25,15 +25,5 @@ class Events extends Model
         'role_code'
     ];
 
-    /**
-     * Boot method to auto-generate UUID on creating event
-     */
-//     protected static function booted()
-//     {
-//         static::creating(function ($event) {
-//         if (empty($event->evnt_id)) {
-//             $event->evnt_id = 'EVNT-' . strtoupper(Str::random(10));
-//         }
-//       });
-//    }
+
 }
