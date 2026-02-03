@@ -297,7 +297,7 @@
 
     //EVENTS ->AWS
     Route::post('saveEvents', [S3UploadController::class, 'save']);
-        
+
 
     //Route::post('events/save', [EventController::class, 'save']);
     Route::delete('events/delete/{id}', [EventController::class, 'delete']);
@@ -315,9 +315,9 @@
     Route::post('uploadimages', [UploadController::class, 'uploadBase64']);
 
     //remove watermark
-    Route::get('/image/preview/{evnt_id}', [ImagePreviewController::class, 'preview'])
-    ->name('image.preview')
-    ->middleware(['signed', 'throttle:30,1']);
+    // Route::get('image/preview/{evnt_id}', [ImagePreviewController::class, 'preview'])
+    // ->name('image.preview')
+    // ->middleware(['signed', 'throttle:30,1']);
 
     //getphotographer
     Route::get('getPhotographers', [UsersActive::class, 'getPhotographers']);
