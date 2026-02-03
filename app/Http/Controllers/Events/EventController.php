@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 class EventController extends Controller
 {
 
-   public function save(Request $request)
+   public function save2(Request $request)
     {
         // 1. Validation
         $validated = $request->validate([
