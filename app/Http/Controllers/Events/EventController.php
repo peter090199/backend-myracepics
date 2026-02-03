@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Str;
+
 
 class EventController extends Controller
 {
@@ -40,10 +40,9 @@ class EventController extends Controller
 
             $fileName = 'event-' . time() . '.png';
 
-            // ✅ CORRECT S3 PATH
+            // ✅ S3 PATH
             $relativePath = "{$roleCode}/{$code}/events/{$fileName}";
 
-            // Upload to S3
             Storage::disk('s3')->put(
                 $relativePath,
                 base64_decode($imageData),
@@ -53,12 +52,10 @@ class EventController extends Controller
                 ]
             );
 
-            // ✅ CORRECT PUBLIC S3 URL
             $imagePath = Storage::disk('s3')->url($relativePath);
         }
 
-        // Unique Event ID
-         $eventId = 'EVENT-' . strtoupper(Str::random(10));
+        // ❌ DO NOT GENERATE evnt_id HERE (MODEL HANDLES IT)
 
         $event = Events::create([
             'title'     => $validated['title'],
@@ -68,7 +65,6 @@ class EventController extends Controller
             'code'      => $code,
             'role_code' => $roleCode,
             'image'     => json_encode($imagePath ? [$imagePath] : []),
-            'evnt_id'   => $eventId,
             'user_id'   => $user->id,
         ]);
 
@@ -78,6 +74,7 @@ class EventController extends Controller
             'event'   => $event
         ]);
     }
+
 
    public function savexxx(Request $request)
     {
