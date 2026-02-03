@@ -59,7 +59,6 @@ class EventController extends Controller
 
         // Unique Event ID
          $eventId = 'EVENT-' . strtoupper(Str::random(10));
-
         $event = Events::create([
             'title'     => $validated['title'],
             'location'  => $validated['location'],
