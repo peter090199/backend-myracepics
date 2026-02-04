@@ -595,7 +595,14 @@ Route::get('/s3-test', function () {
 Route::get('/upload', [S3UploadController::class, 'showForm']);
 Route::post('/upload', [S3UploadController::class, 'uploadImage'])->name('upload.image');
 
-
+Route::get('/test-s3', function () {
+    try {
+        Storage::disk('s3')->put('test.txt', 'S3 Connected!');
+        return '✅ S3 CONNECTED SUCCESSFULLY';
+    } catch (\Exception $e) {
+        return '❌ ' . $e->getMessage();
+    }
+});
 
 Route::get("auth/google",[GoogleAuthController::class,"redirectToGoogle"])->name("redirect.google");
 Route::get("auth/google/callback",[GoogleAuthController::class,"handleGoogleCallback"]);
