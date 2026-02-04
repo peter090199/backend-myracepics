@@ -135,7 +135,7 @@ class EventController extends Controller
                 'code'      => $user->code,
                 'role_code' => $user->role_code,
                 'evnt_id'   => $eventId,
-                'image'     => [$storedPath], // store relative path
+                'image'     => $storedPath, // store relative path
             ]);
 
             // 5. Return public URL
