@@ -15,7 +15,65 @@ use Illuminate\Support\Str;
 class EventController extends Controller
 {
 
-   public function saveEvents(Request $request)
+//    public function saveEvents(Request $request)
+//     {
+//         // 1. Validation
+//         $validated = $request->validate([
+//             'title'    => 'required|string|max:255',
+//             'location' => 'required|string|max:255',
+//             'date'     => 'required|date',
+//             'category' => 'required|string|max:100',
+//             'image'    => 'required|image|max:5120', 
+//         ]);
+
+//         try {
+//             $user = Auth::user();
+//             if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
+
+//             // 2. File Upload
+//             $storedPath = null;
+//             if ($request->hasFile('image')) {
+//                 $file = $request->file('image');
+//                 $directory = "{$user->role_code}/{$user->code}/events";
+                
+//                 // Explicitly use the s3 disk
+//                 $storedPath = Storage::disk('s3')->put($directory, $file);
+                
+//                 if (!$storedPath) throw new \Exception("Upload failed");
+//             }
+
+//             // 3. Unique ID
+//             $eventId = strtoupper(Str::random(10));
+//             while (Events::where('evnt_id', $eventId)->exists()) {
+//                 $eventId = strtoupper(Str::random(10));
+//             }
+
+//             // 4. Database Persistence
+//             $event = Events::create([
+//                 'title'     => $validated['title'],
+//                 'location'  => $validated['location'],
+//                 'date'      => $validated['date'],
+//                 'category'  => $validated['category'],
+//                 'code'      => $user->code,
+//                 'role_code' => $user->role_code,
+//                 'evnt_id'   => $eventId,
+//                 // Cast to array if using Laravel 10/11 casts in Model
+//                 'image'     => [$storedPath], 
+//             ]);
+
+//             return response()->json([
+//                 'success' => true,
+//                 'url'     => Storage::disk('s3')->temporaryUrl($storedPath, now()->addMinutes(10))
+//             ]);
+
+//         } catch (\Exception $e) {
+//             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+//         }
+//     }
+
+
+
+    public function saveEvents(Request $request)
     {
         // 1. Validation
         $validated = $request->validate([
@@ -23,7 +81,7 @@ class EventController extends Controller
             'location' => 'required|string|max:255',
             'date'     => 'required|date',
             'category' => 'required|string|max:100',
-            'image'    => 'required|image|max:5120', 
+            'image'    => 'required|image|max:10240', // 10MB limit
         ]);
 
         try {
@@ -34,15 +92,17 @@ class EventController extends Controller
             $storedPath = null;
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
+
+                // Create a directory structure: /storage/app/public/{role_code}/{code}/events
                 $directory = "{$user->role_code}/{$user->code}/events";
-                
-                // Explicitly use the s3 disk
-                $storedPath = Storage::disk('s3')->put($directory, $file);
-                
+
+                // Store the file locally
+                $storedPath = $file->store($directory, 'public'); // 'public' disk points to storage/app/public
+
                 if (!$storedPath) throw new \Exception("Upload failed");
             }
 
-            // 3. Unique ID
+            // 3. Unique Event ID
             $eventId = strtoupper(Str::random(10));
             while (Events::where('evnt_id', $eventId)->exists()) {
                 $eventId = strtoupper(Str::random(10));
@@ -57,19 +117,22 @@ class EventController extends Controller
                 'code'      => $user->code,
                 'role_code' => $user->role_code,
                 'evnt_id'   => $eventId,
-                // Cast to array if using Laravel 10/11 casts in Model
-                'image'     => [$storedPath], 
+                'image'     => [$storedPath], // store relative path
             ]);
+
+            // 5. Generate public URL for Hostinger
+            $url = asset("storage/{$storedPath}"); // points to public/storage/{file}
 
             return response()->json([
                 'success' => true,
-                'url'     => Storage::disk('s3')->temporaryUrl($storedPath, now()->addMinutes(10))
+                'url'     => $url,
             ]);
 
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
+
 
     public function savex22(Request $request)
     {
