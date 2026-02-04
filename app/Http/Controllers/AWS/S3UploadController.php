@@ -21,9 +21,8 @@ class S3UploadController extends Controller
      */
     public function uploadImages(Request $request)
     {
-        // Validate uploaded file (max 10MB)
         $request->validate([
-            'image' => 'required|image|max:10240', // 10240 KB = 10 MB
+            'image' => 'required|image|max:10240', // 10 MB
         ]);
 
         if (!$request->hasFile('image')) {
@@ -31,19 +30,13 @@ class S3UploadController extends Controller
         }
 
         $file = $request->file('image');
+        $filename = time() . '_' . $file->getClientOriginalName();
 
         try {
-            // Generate a unique filename
-            $filename = time() . '_' . $file->getClientOriginalName();
+            // Upload to S3
+            $path = Storage::disk('s3')->putFileAs('uploads', $file, $filename);
 
-            // Store the file on S3 (uploads folder)
-            $path = $file->storeAs('uploads', $filename, 's3');
-
-            if (!$path) {
-                return back()->withErrors(['image' => 'Failed to upload file to S3']);
-            }
-
-            // Generate a temporary secure URL (5 minutes)
+            // Generate temporary URL
             $url = Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(5));
 
             return back()
@@ -51,11 +44,8 @@ class S3UploadController extends Controller
                 ->with('url', $url);
 
         } catch (\Exception $e) {
-            return back()->withErrors([
-                'image' => 'S3 upload error: ' . $e->getMessage()
-            ]);
+            return back()->withErrors(['image' => 'S3 upload error: ' . $e->getMessage()]);
         }
     }
-
     
 }
