@@ -105,7 +105,7 @@ class EventController extends Controller
 
                 // Directory structure
                 $directory = "{$user->role_code}/{$user->code}/events";
-                $filename = time() . "_profile.{$extension}";
+                $filename = time() . "_event.{$extension}";
                 $storagePath = storage_path("app/public/{$directory}");
 
                 if (!file_exists($storagePath)) mkdir($storagePath, 0755, true);
