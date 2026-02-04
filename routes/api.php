@@ -296,8 +296,7 @@
     Route::post('photos/delete', [PhotoUploadController::class, 'delete']);
 
     //EVENTS ->AWS
-    Route::post('saveEvents', [S3UploadController::class, 'save']);
-
+    Route::post('saveEvents', [S3UploadController::class, 'saveEvents']);
 
     //Route::post('events/save', [EventController::class, 'save']);
     Route::delete('events/delete/{id}', [EventController::class, 'delete']);
