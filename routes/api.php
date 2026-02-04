@@ -314,9 +314,9 @@
     Route::post('uploadimages', [UploadController::class, 'uploadBase64']);
 
     //remove watermark
-    // Route::get('image/preview/{evnt_id}', [ImagePreviewController::class, 'preview'])
-    // ->name('image.preview')
-    // ->middleware(['signed', 'throttle:30,1']);
+    Route::get('image/preview/{evnt_id}', [ImagePreviewController::class, 'preview'])
+    ->name('image.preview')
+    ->middleware(['signed', 'throttle:30,1']);
 
     //getphotographer
     Route::get('getPhotographers', [UsersActive::class, 'getPhotographers']);
