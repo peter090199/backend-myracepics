@@ -604,8 +604,8 @@ Route::get('/s3-test', function () {
     }
 });
 
-Route::get('/s3-upload', [S3UploadController::class, 'showForm']);
-Route::post('/s3-upload', [S3UploadController::class, 'uploadImages'])->name('s3.upload');
+Route::get('/s3-upload', [S3UploadController::class, 'showForm'])->name('upload.form'); // shows the form
+Route::post('/s3-upload', [S3UploadController::class, 'uploadImages'])->name('upload.images');
 
 Route::get('/test-s3', function () {
     try {
