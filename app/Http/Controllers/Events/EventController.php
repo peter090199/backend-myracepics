@@ -71,6 +71,60 @@ class EventController extends Controller
 //         }
 //     }
 
+
+    public function saveEvent(Request $request)
+    {
+        $validated = $request->validate([
+            'title'    => 'required|string|max:255',
+            'location' => 'required|string|max:255',
+            'date'     => 'required|date',
+            'category' => 'required|string|max:100',
+            'image'    => 'nullable|string',
+        ]);
+        // 🔥 Get authenticated user
+        $user = Auth::user();
+
+        $code = $user->code;           // ex: Photographer
+        $roleCode = $user->role_code;  // ex: PH
+
+        $imagePath = null;
+
+        if (!empty($validated['image'])) {
+
+            $imageData = preg_replace('#^data:image/\w+;base64,#i', '', $validated['image']);
+            $imageData = str_replace(' ', '+', $imageData);
+
+            // Folder by role_code
+            $fileName = 'event-' . time() . '.png';
+            $relativePath = $roleCode . '/' . $code . '/' . $fileName;
+            Storage::disk('public')->put($relativePath, base64_decode($imageData));
+            $imagePath = asset('storage/app/public/' . $relativePath);
+        }
+
+        $eventId = strtoupper(Str::random(10));
+        while (Events::where('evnt_id', $eventId)->exists()) {
+            $eventId = strtoupper(Str::random(10));
+        }
+
+        $event = Events::create([
+            'title'     => $validated['title'],
+            'location'  => $validated['location'],
+            'date'      => $validated['date'],
+            'category'  => $validated['category'],
+            'code'      => $code,
+            'role_code' => $roleCode,
+            'image'     => json_encode($imagePath ? [$imagePath] : []),
+            'user_id'   => $eventId, // recommended
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Event saved successfully',
+            'event'   => $event
+        ]);
+    }
+
+
     public function saveEvents(Request $request)
     {
         $validated = $request->validate([
