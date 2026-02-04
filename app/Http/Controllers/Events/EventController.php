@@ -101,10 +101,13 @@ class EventController extends Controller
             $imagePath = asset('storage/app/public/' . $relativePath);
         }
 
-        $eventId = strtoupper(Str::random(20));
-        while (Events::where('evnt_id', $eventId)->exists()) {
-            $eventId = strtoupper(Str::random(20));
-        }
+        $title = $validated['title']; // e.g., "summer festival 2026"
+        $baseId = str_replace(' ', '', ucwords(strtolower($title))); 
+        do{
+            $randomSuffix = strtoupper(Str::random(10)); // 5 random chars
+            $eventId = $baseId . $randomSuffix; 
+        }while (Events::where('evnt_id', $eventId)->exists());
+
 
         $event = Events::create([
             'title'     => $validated['title'],
@@ -566,7 +569,7 @@ public function getEventByUuid($evnt_id)
     ]);
 }
 
-   public function upload(Request $request)
+public function upload(Request $request)
 {
     // Validate inputs
     $request->validate([
