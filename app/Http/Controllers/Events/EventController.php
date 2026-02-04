@@ -114,7 +114,7 @@ class EventController extends Controller
             'code'      => $code,
             'role_code' => $roleCode,
             'image'     => json_encode($imagePath ? [$imagePath] : []),
-            'user_id'   => $eventId, // recommended
+            'evnt_id'   => $eventId, // recommended
         ]);
         
         return response()->json([
