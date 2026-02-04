@@ -101,9 +101,9 @@ class EventController extends Controller
             $imagePath = asset('storage/app/public/' . $relativePath);
         }
 
-        $eventId = strtoupper(Str::random(10));
+        $eventId = strtoupper(Str::random(20));
         while (Events::where('evnt_id', $eventId)->exists()) {
-            $eventId = strtoupper(Str::random(10));
+            $eventId = strtoupper(Str::random(20));
         }
 
         $event = Events::create([
