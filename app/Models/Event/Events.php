@@ -25,5 +25,5 @@ class Events extends Model
         'role_code'
     ];
 
-
+    
 }

@@ -15,82 +15,59 @@ use Illuminate\Support\Str;
 class EventController extends Controller
 {
 
-    public function saveEvents(Request $request)
+   public function saveEvents(Request $request)
     {
-        // 1. Validation: 'image' is now a file validation
+        // 1. Validation
         $validated = $request->validate([
             'title'    => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'date'     => 'required|date',
             'category' => 'required|string|max:100',
-            'image'    => 'required|image|max:5120', // Max 5MB
+            'image'    => 'required|image|max:5120', 
         ]);
 
-        $user = Auth::user();
-        $code = $user->code;
-        $roleCode = $user->role_code;
-        $storedPath = null;
-
-        // 2. Handle File Upload (Standard S3 Upload)
-        if ($request->hasFile('image')) {
-            try {
-                $file = $request->file('image');
-
-                // Construct your specific directory structure
-                // Example: "ADMIN/USER123/events"
-                $directory = trim("{$roleCode}/{$code}/events", '/');
-
-                // Store the file with a random name in that directory
-                $storedPath = $file->store($directory, 's3');
-
-                if (!$storedPath) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Failed to upload file to S3'
-                    ], 500);
-                }
-            } catch (\Exception $e) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'AWS S3 Error: ' . $e->getMessage()
-                ], 500);
-            }
-        }
-
-        // 3. Generate unique Event ID
-        do {
-            $eventId = strtoupper(Str::random(10));
-        } while (Events::where('evnt_id', $eventId)->exists());
-
-        // 4. Save event to database
         try {
+            $user = Auth::user();
+            if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
+
+            // 2. File Upload
+            $storedPath = null;
+            if ($request->hasFile('image')) {
+                $file = $request->file('image');
+                $directory = "{$user->role_code}/{$user->code}/events";
+                
+                // Explicitly use the s3 disk
+                $storedPath = Storage::disk('s3')->put($directory, $file);
+                
+                if (!$storedPath) throw new \Exception("Upload failed");
+            }
+
+            // 3. Unique ID
+            $eventId = strtoupper(Str::random(10));
+            while (Events::where('evnt_id', $eventId)->exists()) {
+                $eventId = strtoupper(Str::random(10));
+            }
+
+            // 4. Database Persistence
             $event = Events::create([
                 'title'     => $validated['title'],
                 'location'  => $validated['location'],
                 'date'      => $validated['date'],
                 'category'  => $validated['category'],
-                'code'      => $code,
-                'role_code' => $roleCode,
+                'code'      => $user->code,
+                'role_code' => $user->role_code,
                 'evnt_id'   => $eventId,
-                // Store the path as a JSON array as per your original structure
-                'image'     => json_encode($storedPath ? [$storedPath] : []),
+                // Cast to array if using Laravel 10/11 casts in Model
+                'image'     => [$storedPath], 
             ]);
-
-            // Generate a temporary URL just for the immediate response preview
-            $temporaryUrl = $storedPath ? Storage::disk('s3')->temporaryUrl($storedPath, now()->addMinutes(5)) : null;
 
             return response()->json([
                 'success' => true,
-                'message' => 'Successfully saved.',
-                'event'   => $event,
-                'url'     => $temporaryUrl
+                'url'     => Storage::disk('s3')->temporaryUrl($storedPath, now()->addMinutes(10))
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Database Error: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
