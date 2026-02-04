@@ -114,7 +114,7 @@ class EventController extends Controller
                 file_put_contents("{$storagePath}/{$filename}", $imageData);
 
                 // Save the **database path starting with /storage/...**
-                $storedPath = "/storage/{$directory}/{$filename}";
+                $storedPath = "/storage/app/public/{$directory}/{$filename}";
             }
 
             // 2. Unique Event ID
