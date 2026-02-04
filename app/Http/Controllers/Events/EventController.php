@@ -466,7 +466,6 @@ class EventController extends Controller
         ]);
     }
 
-
     public function update(Request $request, $id)
     {
         $event = Events::find($id);
@@ -531,6 +530,8 @@ class EventController extends Controller
             'events'  => $events
         ]);
     }
+
+
 public function getEventByUuid($evnt_id)
 {
     // Find event by UUID (correct column name without trailing space)
