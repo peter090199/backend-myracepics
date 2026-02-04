@@ -72,7 +72,6 @@ class EventController extends Controller
 //     }
 
 
-
     public function saveEvents(Request $request)
     {
         // 1. Validation
@@ -81,25 +80,45 @@ class EventController extends Controller
             'location' => 'required|string|max:255',
             'date'     => 'required|date',
             'category' => 'required|string|max:100',
-            'image'    => 'required|image|max:10240', // 10MB limit
+            'image'    => 'required|string', // now Base64 string
         ]);
 
         try {
             $user = Auth::user();
             if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
 
-            // 2. File Upload
+            // 2. Decode Base64 and save locally
             $storedPath = null;
-            if ($request->hasFile('image')) {
-                $file = $request->file('image');
+            $base64Image = $validated['image'];
 
-                // Create a directory structure: /storage/app/public/{role_code}/{code}/events
+            if ($base64Image) {
+                // Extract extension if present (data:image/png;base64,...)
+                if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
+                    $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+                    $extension = strtolower($type[1]); // jpg, png, etc.
+                } else {
+                    $extension = 'jpg'; // default
+                }
+
+                $base64Image = str_replace(' ', '+', $base64Image);
+                $imageData = base64_decode($base64Image);
+
+                if ($imageData === false) {
+                    throw new \Exception('Base64 decode failed');
+                }
+
+                // Build directory and filename
                 $directory = "{$user->role_code}/{$user->code}/events";
+                $filename = time() . "_profile.{$extension}";
+                $path = storage_path("app/public/{$directory}");
 
-                // Store the file locally
-                $storedPath = $file->store($directory, 'public'); // 'public' disk points to storage/app/public
+                if (!file_exists($path)) {
+                    mkdir($path, 0755, true);
+                }
 
-                if (!$storedPath) throw new \Exception("Upload failed");
+                // Save the file
+                file_put_contents("{$path}/{$filename}", $imageData);
+                $storedPath = "{$directory}/{$filename}";
             }
 
             // 3. Unique Event ID
@@ -120,8 +139,8 @@ class EventController extends Controller
                 'image'     => [$storedPath], // store relative path
             ]);
 
-            // 5. Generate public URL for Hostinger
-            $url = asset("storage/{$storedPath}"); // points to public/storage/{file}
+            // 5. Return public URL
+            $url = asset("storage/{$storedPath}");
 
             return response()->json([
                 'success' => true,
@@ -129,9 +148,13 @@ class EventController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
+
 
 
     public function savex22(Request $request)
