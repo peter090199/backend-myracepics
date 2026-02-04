@@ -43,13 +43,8 @@ return [
             'secret' => env('AWS_SECRET_ACCESS_KEY'),
             'region' => env('AWS_DEFAULT_REGION'),
             'bucket' => env('AWS_BUCKET'),
-
-            // DO NOT set AWS_URL unless you really need it
             'url' => env('AWS_URL'),
-
-            // Only set endpoint if using custom S3 (DO / B2)
             'endpoint' => env('AWS_ENDPOINT'),
-
             'visibility' => 'public',
             'throw' => false,
         ],
