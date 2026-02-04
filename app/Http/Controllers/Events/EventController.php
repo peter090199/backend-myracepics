@@ -71,7 +71,6 @@ class EventController extends Controller
 //         }
 //     }
 
-
     public function saveEvents(Request $request)
     {
         // 1. Validation
