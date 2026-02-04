@@ -1,8 +1,8 @@
 
-@token = 1926|TbvOE9otQHpBFVligIFDFmACHd9bwn694MBnlTIl820900fb
+@token = 2319|VXbuEQ7ObbqioGvotFVLtv5k38v1AsCSgGUTdIgf4fa5
 
-### Login
-POST http://127.0.0.1:8000/api/login
+# POST http://127.0.0.1:8000/api/login
+POST https://backend.myracepics.com/public/api/login
 Content-Type: application/json
 
 {
@@ -11,7 +11,7 @@ Content-Type: application/json
 }
 
 ### getAllModules
-GET http://127.0.0.1:8000/api/getAllModules
+GET https://backend.myracepics.com/public/api/getAllModules
 Authorization: Bearer {{token}}
 Accept: application/json
 
