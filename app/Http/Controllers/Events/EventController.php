@@ -73,60 +73,57 @@ class EventController extends Controller
 
     public function saveEvents(Request $request)
     {
-        // 1. Validation
         $validated = $request->validate([
             'title'    => 'required|string|max:255',
             'location' => 'required|string|max:255',
             'date'     => 'required|date',
             'category' => 'required|string|max:100',
-            'image'    => 'required|string', // now Base64 string
+            'image'    => 'required|string', // Base64
         ]);
 
         try {
             $user = Auth::user();
             if (!$user) return response()->json(['message' => 'Unauthorized'], 401);
 
-            // 2. Decode Base64 and save locally
             $storedPath = null;
+
+            // 1. Decode Base64 and save locally
             $base64Image = $validated['image'];
 
             if ($base64Image) {
-                // Extract extension if present (data:image/png;base64,...)
                 if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
                     $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
-                    $extension = strtolower($type[1]); // jpg, png, etc.
+                    $extension = strtolower($type[1]);
                 } else {
-                    $extension = 'jpg'; // default
+                    $extension = 'jpg';
                 }
 
                 $base64Image = str_replace(' ', '+', $base64Image);
                 $imageData = base64_decode($base64Image);
 
-                if ($imageData === false) {
-                    throw new \Exception('Base64 decode failed');
-                }
+                if ($imageData === false) throw new \Exception('Base64 decode failed');
 
-                // Build directory and filename
+                // Directory structure
                 $directory = "{$user->role_code}/{$user->code}/events";
                 $filename = time() . "_profile.{$extension}";
-                $path = storage_path("app/public/{$directory}");
+                $storagePath = storage_path("app/public/{$directory}");
 
-                if (!file_exists($path)) {
-                    mkdir($path, 0755, true);
-                }
+                if (!file_exists($storagePath)) mkdir($storagePath, 0755, true);
 
-                // Save the file
-                file_put_contents("{$path}/{$filename}", $imageData);
-                $storedPath = "{$directory}/{$filename}";
+                // Save file
+                file_put_contents("{$storagePath}/{$filename}", $imageData);
+
+                // Save the **database path starting with /storage/...**
+                $storedPath = "/storage/{$directory}/{$filename}";
             }
 
-            // 3. Unique Event ID
+            // 2. Unique Event ID
             $eventId = strtoupper(Str::random(10));
             while (Events::where('evnt_id', $eventId)->exists()) {
                 $eventId = strtoupper(Str::random(10));
             }
 
-            // 4. Database Persistence
+            // 3. Save to DB
             $event = Events::create([
                 'title'     => $validated['title'],
                 'location'  => $validated['location'],
@@ -135,11 +132,11 @@ class EventController extends Controller
                 'code'      => $user->code,
                 'role_code' => $user->role_code,
                 'evnt_id'   => $eventId,
-                'image'     => $storedPath, // store relative path
+                'image'     => $storedPath, // string starting with /storage/
             ]);
 
-            // 5. Return public URL
-            $url = asset("storage/{$storedPath}");
+            // 4. Return URL
+            $url = asset($storedPath);
 
             return response()->json([
                 'success' => true,
@@ -147,10 +144,7 @@ class EventController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 500);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
