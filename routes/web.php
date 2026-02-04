@@ -563,25 +563,37 @@ Route::get('/diagonalwatermarkslide22', function () {
     ]);
 });
 
+
 Route::get('/s3-test', function () {
     try {
         $bucket = env('AWS_BUCKET');
 
         $client = new S3Client([
-            'version' => 'latest',
-            'region'  => env('AWS_DEFAULT_REGION'),
+            'version'     => 'latest',
+            'region'      => env('AWS_DEFAULT_REGION', 'ap-east-1'),
             'credentials' => [
                 'key'    => env('AWS_ACCESS_KEY_ID'),
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
             ],
+            // Important for ap-east-1 to fix 400 Bad Request
+            'use_path_style_endpoint' => true,
         ]);
 
         // Check if the bucket exists / accessible
-        $client->headBucket(['Bucket' => $bucket]);
+        $client->headBucket([
+            'Bucket' => $bucket
+        ]);
 
         return [
             'success' => true,
             'message' => "AWS S3 connection to bucket '$bucket' works!",
+        ];
+
+    } catch (\Aws\Exception\AwsException $e) {
+        return [
+            'success' => false,
+            'message' => "AWS S3 connection to bucket failed!",
+            'error' => $e->getAwsErrorMessage(), // more detailed AWS error
         ];
     } catch (\Exception $e) {
         return [
