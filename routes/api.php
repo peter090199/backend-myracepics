@@ -339,6 +339,7 @@
 
 
 
+Route::get('test', function() { return "API is working"; });
 
 
 
