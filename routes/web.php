@@ -8,8 +8,6 @@ use  App\Events\MessageSent;
 use  App\Http\Controllers\Auth\GoogleAuthController;
 use Intervention\Image\ImageManager;
 use App\Http\Controllers\Events\UploadController;
-use App\Http\Controllers\AWS\S3UploadController;
-use Aws\S3\S3Client;
 
 /*
 |--------------------------------------------------------------------------
