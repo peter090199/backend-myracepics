@@ -596,6 +596,7 @@ Route::get('/upload', [S3UploadController::class, 'showForm']);
 Route::post('/upload', [S3UploadController::class, 'uploadImage'])->name('upload.image');
 
 
+
 Route::get("auth/google",[GoogleAuthController::class,"redirectToGoogle"])->name("redirect.google");
 Route::get("auth/google/callback",[GoogleAuthController::class,"handleGoogleCallback"]);
 Route::get('/', function () {
