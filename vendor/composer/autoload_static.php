@@ -724,6 +724,7 @@ class ComposerStaticInitbfe12996eeecb6fdc8713a9fd9d431f8
         'App\\Events\\NotificationCountUpdated' => __DIR__ . '/../..' . '/app/Events/NotificationCountUpdated.php',
         'App\\Events\\PostCreated' => __DIR__ . '/../..' . '/app/Events/PostCreated.php',
         'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
+        'App\\Http\\Controllers\\AWS\\S3UploadController' => __DIR__ . '/../..' . '/app/Http/Controllers/AWS/S3UploadController.php',
         'App\\Http\\Controllers\\Accessrolemenu\\AccessrolemenuController' => __DIR__ . '/../..' . '/app/Http/Controllers/Accessrolemenu/AccessrolemenuController.php',
         'App\\Http\\Controllers\\Auth\\ForgetpasswordController' => __DIR__ . '/../..' . '/app/Http/Controllers/Auth/ForgetpasswordController.php',
         'App\\Http\\Controllers\\Auth\\GoogleAuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/Auth/GoogleAuthController.php',

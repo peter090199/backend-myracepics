@@ -35,6 +35,7 @@ return array(
     'App\\Events\\NotificationCountUpdated' => $baseDir . '/app/Events/NotificationCountUpdated.php',
     'App\\Events\\PostCreated' => $baseDir . '/app/Events/PostCreated.php',
     'App\\Exceptions\\Handler' => $baseDir . '/app/Exceptions/Handler.php',
+    'App\\Http\\Controllers\\AWS\\S3UploadController' => $baseDir . '/app/Http/Controllers/AWS/S3UploadController.php',
     'App\\Http\\Controllers\\Accessrolemenu\\AccessrolemenuController' => $baseDir . '/app/Http/Controllers/Accessrolemenu/AccessrolemenuController.php',
     'App\\Http\\Controllers\\Auth\\ForgetpasswordController' => $baseDir . '/app/Http/Controllers/Auth/ForgetpasswordController.php',
     'App\\Http\\Controllers\\Auth\\GoogleAuthController' => $baseDir . '/app/Http/Controllers/Auth/GoogleAuthController.php',

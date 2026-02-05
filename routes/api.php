@@ -335,9 +335,8 @@
     Route::delete('cart/remove/{img_id}', [AddtoCart::class, 'removeFromCart']);
     Route::get('react/{postId}', [ReactionController::class, 'getReactions']);
 
-
-
-
+    //S3 UPLOAD PHOTOGRAPHER ->AWS CLOUD
+    Route::post('s3upload', [S3UploadController::class, 's3upload']);
 });
 
   

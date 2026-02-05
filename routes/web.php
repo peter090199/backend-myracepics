@@ -564,13 +564,14 @@ Route::get('/diagonalwatermarkslide22', function () {
 });
 
 
+
 Route::get('/s3-test', function () {
     try {
         $bucket = env('AWS_BUCKET');
 
         $client = new S3Client([
             'version'     => 'latest',
-            'region'      => env('AWS_DEFAULT_REGION', 'ap-east-1'),
+            'region'      => env('AWS_DEFAULT_REGION', 'us-east-1'),
             'credentials' => [
                 'key'    => env('AWS_ACCESS_KEY_ID'),
                 'secret' => env('AWS_SECRET_ACCESS_KEY'),
@@ -604,7 +605,7 @@ Route::get('/s3-test', function () {
     }
 });
 
-Route::get('/s3-upload', [S3UploadController::class, 'showForm'])->name('upload.form'); // shows the form
+Route::get('/upload', [S3UploadController::class, 'showForm'])->name('upload.form'); // shows the form
 Route::post('/s3-upload', [S3UploadController::class, 'uploadImages'])->name('upload.images');
 
 Route::get('/test-s3', function () {
