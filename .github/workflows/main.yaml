@@ -22,4 +22,5 @@ jobs:
 
       - name: Sync files to S3
         run: |
-          aws s3 sync . s3://${{ secrets.AWS_BUCKET }} --delete --exclude ".git/*" --exclude "node_modules/*"
+         aws s3 sync . s3://myracepics-cloud --delete --exclude ".git/*" --exclude "node_modules/*"
+
